@@ -1,0 +1,235 @@
+/* reset CSS (taken from blueprint and modified a bit) */
+
+html, body, div, span,
+h1, h2, h3, h4, h5, h6, p,
+a,img,  dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, tbody, tfoot, thead, tr, th, td {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  vertical-align: baseline;
+}
+table { border-collapse: separate; border-spacing: 0; }
+caption, th, td { text-align: left; font-weight: normal; }
+table, td, th { vertical-align: middle; }
+
+/*  end reset */
+
+
+body {
+    width: 80%;
+    margin: 2% auto;
+    background-color: #e9b96e ;
+    border: 2px solid #c17d11;
+}
+
+.logo {
+    float: left;
+    height: 10em;
+}
+
+.header { 
+}
+ 
+.header h1 {
+    text-align: center;
+    margin: 0 30%;
+    border-bottom: 3px solid #000;
+}
+
+.menu {
+    list-style: none;
+    margin: 5%; 
+    margin-left: 35%;
+    width: 60%;
+}
+
+.menu ul {
+    text-align:right;
+    font-size: 1.4em;
+}
+.menu ul li{
+    position: relative;
+    display: inline;
+    margin: 0.2em;
+    padding: 0.2em;
+    background-color: #edd400;
+}
+
+.menu ul li:hover {
+    background-color: #fce94f;
+}
+
+.menu li a {
+    text-decoration: none;
+    color: #000;
+}
+
+.menu ul li ul{
+    position: absolute;
+    display: none;
+    top: 1.4em;
+    width: 9em;
+    right: 0em;
+    font-size: 1em;
+}
+.menu ul li ul li{
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+
+.menu ul li:hover ul {
+    display: block;
+}
+
+.menu fieldset {
+    width: 100%;
+    border: 1px solid #000;
+}
+
+.names {
+    float: left;
+    width: 20%;
+    clear: left;
+    padding: 2%;
+}
+
+.names li, .allplayers li{
+    display: inline;
+}
+
+.rest {
+    margin-left: 23%;
+    padding: 2%;
+}
+
+table.stats td, table.stats th {
+  margin-left:  0.2em;
+  margin-right: 0.2em;
+  padding-left:  0.2em;
+  padding-right: 0.2em;
+  border-right: solid 0.1em #000;
+}
+table.stats tr td:last-child, 
+table.stats tr th:last-child { 
+    border-right: solid 0 #000; 
+}
+table.stats th { 
+    min-width: 6em;
+    border-bottom: solid 0.2em #000 }
+
+table.stats thead tr .header {
+    background-image: url(bg.png);
+    background-repeat: no-repeat;
+    background-position: center right;
+    cursor: pointer;
+}
+table.stats tbody td {
+    padding: 4px;
+    background-color: #eaeaea;
+    vertical-align: top;
+}
+table.stats thead tr .headerSortUp {
+    background-image: url(asc.png);
+}
+table.stats thead tr .headerSortDown {
+    background-image: url(desc.png);
+}
+table.stats thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
+    background-color: #8dbdd8;
+}
+table.stats { 
+  margin: 0.5em 1em;
+  border: solid 0.2em #aeaeae;
+  -moz-border-radius: 0.5em ;
+}
+table.stats tbody tr.odd td  { background-color:#aeaeae; }
+
+div.persongames td {
+ vertical-align: top;
+}
+div.persongames table {
+ vertical-align: top;
+}
+div.persongames tr {
+ vertical-align: top;
+}
+div.persongames thead {
+  text-align:center;
+}
+div.persongames ul {
+  list-style: none;
+}
+
+div.rumor {
+ float:left;
+ min-width:30em;
+ margin:10px;
+ padding:5px;
+background-color:#eebb15;
+text-align:center;
+}
+
+div.games-id
+{
+  clear:both;
+background-color:#EEEEEE;
+
+}
+
+div.games-id h2    { 
+  margin-top:0;
+  text-align:center;
+  background-color:#DDDDDD;
+}
+div.games-id table { 
+  margin-left:  auto;
+  margin-right: auto; 
+  border: 1px black solid;
+  border-collapse:collapse;
+}
+div.games-id td { 
+ text-align: right;  
+ border: thin solid grey;
+}
+
+div.games-id thead td {
+ border: thin solid grey;
+}
+/******* GRAPHS *****/
+
+div.person-graph {
+  float:left;
+  margin:50px;
+  text-align:center;
+}
+
+.bg {fill:white;}
+
+.singleperson1{
+        fill:red;
+        fill-opacity:0.4;
+//      stroke:red;
+//      stroke-width:1;
+}
+
+.singleperson2{
+        fill:yellow;
+        fill-opacity:0.4;
+//      stroke:yellow;
+//      stroke-width:1;
+}
+
+.singleperson0{
+        fill:blue;
+        fill-opacity:0.4;
+//      stroke:blue;
+//      stroke-width:1;
+}
+
+.singleperson1:hover,.singleperson0:hover,.singleperson2:hover{
+//  stroke-width:1;
+        fill-opacity:0.9;
+}

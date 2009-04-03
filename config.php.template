@@ -1,0 +1,10 @@
+<?php
+
+/* set the information for the database */
+
+$DB_HOST   = 'please fill in';
+$DB_USER   = 'please fill in';
+$DB_PASSWD = 'please fill in';
+$DB_DB     = 'please fill in';
+
+?>
