@@ -549,15 +549,21 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 		     $sum += $s;
 		     $N++;
 		     
-		     if($N>=$k) break;
+		     if($N==$k) break;
 		   };
 		 
 		 /* average and save result into table */
 		 if($N==$k) 
-		   {
+		   { /* got enough data points*/
 		     $datout[$k][$i]['sum'] = $sum;
 		     $datout[$k][$i]['avg'] = $sum/$N;
 		     $datout[$k][$i]['num'] = $N;
+		   }
+		 else
+		   { /* not enough data points */
+		     $datout[$k][$i]['sum'] = "";
+		     $datout[$k][$i]['avg'] = "";
+		     $datout[$k][$i]['num'] = 0;
 		   };
 	       };
 	   };
@@ -581,26 +587,19 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	     
 	     $output = "";
 	     $output.= "<tr><td><a href=\"index.php?name=".$name."\">$name</a></td>";
-	     $ok=0;
 	     
 	     for($k=50; $k>0;$k-=10)
 	       {
 		 $s  = $datout[$k][$i]['sum'];
 		 $a  = round($datout[$k][$i]['avg'],2);
 		 
-		 if ($datout[$k][$i]['num']>=$k)
-		   {
-		     $ok=1;
-		     $output.="<td>$a ($s)</td>";
-		   }
+		 if ($datout[$k][$i]['num']>0)
+		   $output.="<td>$a ($s)</td>";
 		 else
-		   {
-		     $output.="<td></td> ";
-		   }
+		   $output.="<td>-</td> ";
 	       }
 	     $output .= "</tr>\n";
-	     if($ok) 
-	       echo $output;
+	     echo $output;
 	   }
 	 echo "</tbody></table>\n";
 	 
@@ -693,7 +692,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	     if(isset($point["blackcard"]) && $point["blackcard"])
 	       echo "<td> * </td>";
 	     else
-	       echo "<td>  </td>";
+	       echo "<td> </td>";
 	     echo "</tr>\n";
 	   }
 	 
