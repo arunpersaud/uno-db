@@ -527,7 +527,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	       };
 
 
-	     if($n>=$mingames)
+	     if($n>=$mingames && $n>0)
 	       $j++;
 	     else
 	       unset($data[$j]);
