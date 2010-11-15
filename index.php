@@ -660,7 +660,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	     $black  = $dat[2]; /*end with black card?*/ 
 	     $id     = $dat[3]; /*games id*/
 	     $points[$id][$name] = $score;
-	     $points[$id]["__blackcard"] = $black;
+	     $points[$id]["blackcard"] = $black;
 	     $names[$name] = 1; /* just to keep track of the names */
 	   }
 	 
@@ -681,7 +681,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	       echo "<tr>";
 	     foreach($point as $name =>$entry)
 	       {
-		 if($name!="__blackcard")
+		 if($name!="blackcard")
 		   if($entry==-1)
 		     echo "<td> - </td>";
 		   else
@@ -690,8 +690,10 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 		       echo "<td>".$sumpoints[$name]."</td>";
 		     }
 	       };
-	     if($point["__blackcard"])
+	     if(isset($point["blackcard"]) && $point["blackcard"])
 	       echo "<td> * </td>";
+	     else
+	       echo "<td>  </td>";
 	     echo "</tr>\n";
 	   }
 	 
