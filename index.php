@@ -506,9 +506,10 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 
 	 /* get the  last 50 games of each player */
 	 $j=1;
+	 if($mingames>50) $mingames=50;
 	 for($i=1;$i<$maxid;$i++)
 	   {
-	     $datatmp = mysql_query( "SELECT IF(score<0,0,score) as scores ".
+	     $datatmp = mysql_query( "SELECT IF(score<0,0,score) as scores, players.name ".
 				     "FROM scores LEFT JOIN players ON players.id=scores.player ".
 				     "            LEFT JOIN games   ON games.id=scores.game ".
 				     "            LEFT JOIN session ON session.id=games.session ".
@@ -520,10 +521,13 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	     $data[$j] = array();
 	     while($score=mysql_fetch_array($datatmp, MYSQL_NUM))
 	       {
+		 $data[$j]['name']=$score[1];
 		 $data[$j][] = $score[0];
 		 $n++;
 	       };
-	     if($n>$mingames)
+
+
+	     if($n>=$mingames)
 	       $j++;
 	     else
 	       unset($data[$j]);
@@ -580,10 +584,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 
 	 for($i=1;$i<$maxid;$i++)
 	   {
-	     $dntmp = mysql_query("SELECT players.name ".
-				  "FROM players WHERE id='$i'");
-	     $name = mysql_fetch_array($dntmp, MYSQL_NUM);
-	     $name = $name[0];
+	     $name = $data[$i]['name'];
 	     
 	     $output = "";
 	     $output.= "<tr><td><a href=\"index.php?name=".$name."\">$name</a></td>";
