@@ -48,29 +48,26 @@ if( $db = mysql_connect($DB_HOST,$DB_USER, $DB_PASSWD) )
 if(!$_REQUEST["file"])
   {	
     /* output names and dates for cut and paste */
-    echo "<div>At the moment the file format is not very forgiving, so you can't make any syntax mistakes. </div>\n";
+    echo "<div>At the moment the file format is not very forgiving, so you shouldn't make any syntax mistakes. </div>\n";
     echo "<div class=\"cutandpaste\">\n";
     echo "<h3> Cut & Paste section </h3>\n";
     
-    echo "<div class=\"places\">\n";
+    echo "<h4>Places</h4>\n";
     $datatmp = mysql_query("SELECT DISTINCT location FROM session ORDER BY location");
     while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
       echo "<span>".$who[0]."</span>\n";
-    echo "</div>\n";
     
-    echo "<div class=\"allnames\">\n";
+    echo "<h4>Names</h4>\n";
     $datatmp = mysql_query("SELECT name FROM players ORDER BY name");
     while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
       echo "<span>".$who[0]."</span>\n";
-    echo "</div>\n";
     
-    echo "<div class=\"dates\">\n";
+    echo "<h4>Dates</h4>\n";
     echo "<span>".date("Y-m-d",time()-60*60*24*4)."</span>\n";
     echo "<span>".date("Y-m-d",time()-60*60*24*3)."</span>\n";
     echo "<span>".date("Y-m-d",time()-60*60*24*2)."</span>\n";
     echo "<span>".date("Y-m-d",time()-60*60*24*1)."</span>\n";
     echo "<span>".date("Y-m-d",time())."</span>";
-    echo "</div>\n";
     
     echo "</div>\n";
     
@@ -80,7 +77,7 @@ if(!$_REQUEST["file"])
     echo "<form action=\"data-input.php\">
 <fieldset>
 <legend>PGN</legend>
-<textarea name=\"file\" cols=\"70\" rows=\"30\">
+<textarea name=\"file\" cols=\"70\" rows=\"20\">
 [Site \"\"]
 [Date \"\"]
 [Players \"\"]
@@ -278,15 +275,22 @@ $file</textarea>
 		     $players = explode(" ",trim($players[1]));
 		     $N       = sizeof($players);
 		     echo "found $N players<br>";
+
+		     /* escape strings */
+		     $date   = DB_quote_smart($date[1]);
+		     $site   = DB_quote_smart($site[1]);
+		     $N      = DB_quote_smart($N);
+		     $player = DB_quote_smart($player);
+
 		     
 		     /*add a new entry for this session of games */
-		     mysql_query("INSERT INTO session VALUES (NULL, '$date[1]','$site[1]',$N)");
+		     mysql_query("INSERT INTO session VALUES (NULL, $date,$site,$N)");
 		     $session_id = mysql_insert_id();
 		     
 		     /* check for new names and remember player ids*/
 		     foreach($players as $player) 
 		       {
-			 $qresult=mysql_query("SELECT id FROM players WHERE name='$player'");
+			 $qresult=mysql_query("SELECT id FROM players WHERE name=$player");
 			 if(mysql_num_rows($qresult))
 			   {
 			     /* this player already exists in the database */
@@ -297,7 +301,7 @@ $file</textarea>
 			 else
 			   {
 			     /* found a new player */
-			     mysql_query("INSERT INTO players VALUES (NULL, '$player')");
+			     mysql_query("INSERT INTO players VALUES (NULL, $player)");
 			     $playerid[0] = mysql_insert_id();
 			     $names[]     = array("name"=>$player,"id" => $playerid[0]);
 			     echo "new player $player ".$playerid[0]." <br>";

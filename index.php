@@ -103,20 +103,12 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 <?php
 echo "
 <li> <a href=\"index.php?".$options."\">  Home </a> </li> 
-<li> Points 
-  <ul>
-    <li><a href=\"index.php?total=games&amp;".$options."\">         all games      </a> </li>
-    <li><a href=\"index.php?total=movingaverage&amp;".$options."\"> moving average </a> </li>\n"; ?>
-  </ul> 
-</li>
-<li> Games
-  <ul>
-    <li><a href="index.php?games=all"> all</a></li>
-    <li><a href="index.php?lowest=1">  low  scoring</a> </li>
-    <li><a href="index.php?highest=1"> high scoring</a> </li>
-  </ul>
-</li>
-<li> <a href="data-input.php"> Admin </a> </li>
+<li><a href=\"index.php?total=games&amp;".$options."\">         all games      </a> </li>
+<li><a href=\"index.php?total=movingaverage&amp;".$options."\"> moving average </a> </li>\n"; ?>
+<li><a href="index.php?games=all"> all sessions</a></li>
+<li><a href="index.php?lowest=1">  low  scoring sessions</a> </li>
+<li><a href="index.php?highest=1"> high scoring sessions</a> </li>
+<li><a href="data-input.php"> Admin </a> </li>
 </ul>
 
 <br />
@@ -263,7 +255,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
      
      
      /* overall statistics */
-     echo "<div class=\"overall\">\n";
+     echo "<div class=\"games\">\n";
      echo "<table>\n";
      echo "<thead><tr><th>Name</th><th>Points</th><th>Average</th><th>Sigma</th><th>Number of Games </th><th>Wins</th></tr></thead>\n";
      echo "<tbody>\n";
@@ -295,11 +287,10 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
        }
      echo "</tbody></table>\n";
      echo "</div>\n";
-     echo "<br class=\"clear\" />\n";
      /* print averages vs. groupsize */
      foreach($names as $name)
        {
-	 echo "<div class=\"groupsize\">\n ";
+	 echo "<div class=\"games\">\n ";
 	 if(sizeof($names)>1) echo "<h4> $name </h4>\n";
 	 echo "<table>\n";
 	 echo "<thead><tr><th>Groupsize</th><th>Points</th><th>Average</th><th>Sigma</th><th>Number of Games </th><th>Wins</th></tr></thead>\n";
@@ -430,7 +421,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
        }
          
      /* games the player played in */
-     echo "<div class=\"persongames\">\n";
+     echo "<div class=\"games\">\n";
      echo "<h4> the following games are in the database</h4>\n";
      echo "<table><thead><tr>\n";
      foreach($names as $name)
@@ -514,6 +505,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 $maxid = $maxid[0];
 	 
 	 /* get the  last 50 games of each player */
+	 $j=1;
 	 for($i=1;$i<$maxid;$i++)
 	   {
 	     $datatmp = mysql_query( "SELECT IF(score<0,0,score) as scores ".
@@ -523,14 +515,25 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 				     "WHERE scores.player=$i ".($groupsize?" AND session.number_of_players=".DB_quote_smart($groupsize)." ":"").
 				     "ORDER BY session.date DESC, scores.id DESC ".
 				     "LIMIT 50");
-	     $data[$i] = array();
+	     
+	     $n=0;
+	     $data[$j] = array();
 	     while($score=mysql_fetch_array($datatmp, MYSQL_NUM))
-	       $data[$i][] = $score[0];
+	       {
+		 $data[$j][] = $score[0];
+		 $n++;
+	       };
+	     if($n>$mingames)
+	       $j++;
+	     else
+	       unset($data[$j]);
+
 	   };
-	 
+	 $maxid=$j;
+
 	 $datout = array(array(array()));
 	 /* do the average for the last $k games */
-	 for($k=50; $k>$mingames;$k-=10)
+	 for($k=50; $k>0;$k-=10)
 	   {
 	     for($i=1;$i<$maxid;$i++)
 	       {
@@ -560,10 +563,10 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	   };
 	 
 	 /* output sorted results */
-	 echo "<h2>sorted by Moving Average (last $k games)</h2>";
+	 echo "<h2>sorted by Moving Average</h2>";
 	 echo "<table class=\"stats\" id=\"ScoreTable\">\n";
 	 echo "<thead><tr><th>Name</th>";
-	 for($k=50; $k>$mingames;$k-=10)
+	 for($k=50; $k>0;$k-=10)
 	   {
 	     echo "<th>$k-Average (Sum)</th>";
 	   };
@@ -580,7 +583,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	     $output.= "<tr><td><a href=\"index.php?name=".$name."\">$name</a></td>";
 	     $ok=0;
 	     
-	     for($k=50; $k>$mingames;$k-=10)
+	     for($k=50; $k>0;$k-=10)
 	       {
 		 $s  = $datout[$k][$i]['sum'];
 		 $a  = round($datout[$k][$i]['avg'],2);
@@ -633,7 +636,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
        }
      else
        {
-	 echo "<div class=\"games-id\">\n";
+	 echo "<div class=\"games\">\n";
 	 $id = $_REQUEST["games"];
 	 $datatmp = mysql_query("SELECT * FROM session  WHERE id=".DB_quote_smart($id));
 	 $data    = mysql_fetch_array($datatmp, MYSQL_NUM);
@@ -702,7 +705,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
  ****************************/
  else if(isset($_REQUEST["lowest"]))
    {
-     echo "<div class=\"extrem\">";
+     echo "<div class=\"games\">";
      echo "<h2>Low scoring games</h2>";
      echo "<table>
   <thead><tr>
@@ -749,7 +752,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
  *****************************/
  else if(isset($_REQUEST["highest"]))
    {
-     echo "<div class=\"extrem\">";
+     echo "<div class=\"games\">";
      echo "<h2>High scoring games</h2>";
      echo "<table>
   <thead><tr>
