@@ -52,16 +52,125 @@ function DB_quote_smart($value)
 
 function DB_open($DB_HOST,$DB_USER,$DB_PASSWD,$DB_DB)
 {
+  $version_needed = 1;
+
   global $db;
   if ( $db = mysql_connect($DB_HOST,$DB_USER, $DB_PASSWD))
     {
-      mysql_select_db($DB_DB) or die('Could not select database');	
+      mysql_select_db($DB_DB) or die('Error: Could not select database');	
     }
   else
     {
-      die (mysql_error());
+      echo mysql_errno() . ": " . mysql_error(). "\n";
+      return -1;
     };
+  
+  /* check database version */
+  $version = DB_get_version();
+  if ($version != $version_needed)
+    return -2;
+
+  return 0;
 }
+
+function DB_query($query)
+{
+  /* debug/optimize the database
+  $time = microtime();
+  $return = mysql_query($query);
+  $time = $time - microtime();
+
+  if($time > 0.05) // this way we can find only the long ones
+  {
+    $logfile=fopen('/tmp/DBlog.log','a+');
+    fwrite($logfile,"EXPLAIN $query ;\n");
+    fwrite($logfile,"time of above query: $time\n");
+    fclose($logfile);
+  };
+
+  return $return;
+  */
+
+  return mysql_query($query);
+}
+
+function DB_fetch_array($result)
+{
+  return mysql_fetch_array($result,MYSQL_NUM);
+}
+
+function DB_insert_id()
+{
+  return mysql_insert_id();
+}
+
+function DB_num_rows($result)
+{
+  return mysql_num_rows($result);
+}
+/* end Mysql functions */
+
+function DB_query_array($query)
+{
+  $result = DB_query($query);
+  if($result)
+    {
+      $return = DB_fetch_array($result);
+      return $return;
+    }
+  
+  return NULL;
+}
+
+function DB_query_array_all($query)
+{
+  $result = array();
+
+  $queryresult  = DB_query($query);
+  while($row = DB_fetch_array($queryresult))
+    $result[] = $row;
+
+  return $result;
+}
+
+function DB_get_version()
+{
+  $version = DB_query_array('SELECT version FROM Version');
+
+  if($version)
+    return $version[0];
+  else
+    return -1;
+}
+
+function config_check()
+{
+  global $DB_HOST, $DB_USER, $DB_PASSWD, $DB_DB, $DB_work;
+
+  /* check if some variables are set in the config file, else set defaults */
+  if(!isset($DB_work))
+    {
+      output_header();
+      echo "<h1>Setup not completed</h1>";
+      echo "You need to set \$DB_work in config.php. ".
+	"If this is set to 1, the db-access will be suspended and one can work safely on the database.".
+	"The default should be 0 for the site to work.";
+      output_footer();
+      exit();
+    }
+
+  if($DB_work)
+    {
+      output_header();
+      echo "Working on the database...please check back later.";
+      output_footer();
+      exit();
+    }
+
+  return;
+}
+
+
 
 /****************************************************
  *
@@ -119,6 +228,12 @@ END;
   echo "</div>\n";
   echo '<img class="logo" src="draw4.png" alt="Draw 4+ logo" />';
 
+}
+
+function output_footer()
+{
+
+  return;
 }
 
 ?>

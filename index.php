@@ -622,7 +622,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 echo "<table>\n";
 	 echo "<thead><tr><th>ID</th><th>Date</th><th>Where</th><th>Number of Players</th></tr></thead>\n";
 	 echo "<tbody>\n";
-	 $datatmp = mysql_query("SELECT * FROM session ".($groupsize?" WHERE session.number_of_players=".DB_quote_smart($groupsize)."":"")." ORDER BY date DESC");
+	 $datatmp = mysql_query("SELECT id,date,location,number_of_players FROM session ".($groupsize?" WHERE session.number_of_players=".DB_quote_smart($groupsize)."":"")." ORDER BY date DESC");
 	 while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
 	   {
 	     $id   = $dat[0]; /*id*/
@@ -638,9 +638,9 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
        {
 	 echo "<div class=\"games\">\n";
 	 $id = $_REQUEST["games"];
-	 $datatmp = mysql_query("SELECT * FROM session  WHERE id=".DB_quote_smart($id));
+	 $datatmp = mysql_query("SELECT date, location FROM session  WHERE id=".DB_quote_smart($id));
 	 $data    = mysql_fetch_array($datatmp, MYSQL_NUM);
-	 echo "<h2> Game ".$data[1]." ".$data[2]." </h2>\n";
+	 echo "<h2> Game ".$data[0]." ".$data[1]." </h2>\n";
 	 echo "<table>\n";
 	 
 	 $points    = array(array());

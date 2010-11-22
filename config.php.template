@@ -38,4 +38,7 @@ $DB_USER   = 'please fill in';
 $DB_PASSWD = 'please fill in';
 $DB_DB     = 'please fill in';
 
+/* set this when working on the database to prevent access*/
+$DB_work   = 0;
+
 ?>

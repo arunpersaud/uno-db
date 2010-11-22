@@ -284,7 +284,7 @@ $file</textarea>
 
 		     
 		     /*add a new entry for this session of games */
-		     mysql_query("INSERT INTO session VALUES (NULL, $date,$site,$N)");
+		     mysql_query("INSERT INTO session VALUES (NULL, $date, $site, $N, NULL)");
 		     $session_id = mysql_insert_id();
 		     
 		     /* check for new names and remember player ids*/
@@ -301,7 +301,7 @@ $file</textarea>
 			 else
 			   {
 			     /* found a new player */
-			     mysql_query("INSERT INTO players VALUES (NULL, $player)");
+			     mysql_query("INSERT INTO players VALUES (NULL, NULL, $player)");
 			     $playerid[0] = mysql_insert_id();
 			     $names[]     = array("name"=>$player,"id" => $playerid[0]);
 			     echo "new player $player ".$playerid[0]." <br>";
