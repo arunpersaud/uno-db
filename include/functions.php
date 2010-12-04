@@ -208,7 +208,7 @@ END;
 <head>
   <title> Uno Statistics </title>
   <meta http-equiv="Content-Type" content="text/xml; charset=ISO-8859-1" />
-  <link rel="stylesheet" type="text/css" href="css/standard.css?v=1"/>	
+  <link rel="stylesheet" type="text/css" href="css/standard.css?v=2"/>	
   <script type="text/javascript" src="jquery.js"> </script>
   <script type="text/javascript" src="jquery.tablesorter.js"></script>
   <script type="text/javascript">
@@ -232,6 +232,18 @@ END;
 
 function output_footer()
 {
+  echo"
+  </div>
+
+<div class=\"footer\"> 
+<div class=\"copyright\"> copyright 2010 Arun Persaud </div>
+<div class=\"source\">See the latest changes via <a href=\"http://uno-darmstadt.git.sourceforge.net/git/gitweb.cgi?p=uno-darmstadt/uno-darmstadt;a=summary\">git</a>
+or download the source via
+'git clone git://uno-darmstadt.git.sourceforge.net/gitroot/uno-darmstadt/uno-darmstadt'   </div> 
+</div>
+
+</body>
+</html>";
 
   return;
 }

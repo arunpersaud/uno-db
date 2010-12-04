@@ -885,8 +885,6 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
      
    }
 
+output_footer();
 mysql_close($db);
 ?>
-</div>
-</body>
-</html>
