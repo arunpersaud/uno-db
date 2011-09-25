@@ -135,7 +135,7 @@ function DB_query_array_all($query)
 
 function DB_get_version()
 {
-  $version = DB_query_array('SELECT version FROM Version');
+  $version = DB_query_array('SELECT version FROM version');
 
   if($version)
     return $version[0];

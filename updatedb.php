@@ -48,7 +48,7 @@ if(isset($_SERVER['REMOTE_ADDR']))
   exit();
 
 $old_version = DB_get_version();
-$current_version = 1;
+$current_version = 2;
 
 if($old_version < $current_version)
   echo "Will upgrade your database now:\n";
@@ -69,6 +69,32 @@ switch($old_version)
              " ADD COLUMN  `create_date` timestamp NOT NULL default '0000-00-00 00:00:00' AFTER id");
 
     echo "Upgraded to version 1.\n";
+
+  case 1:
+    /* add location  */
+    DB_query("CREATE TABLE IF NOT EXISTS locations (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `create_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+      `name` varchar(30) DEFAULT NULL,
+      `coordinates` POINT DEFAULT NULL,
+      PRIMARY KEY (`id`)
+    )");
+
+    /* fill location database */
+    DB_query_array_all("INSERT INTO locations select NULL,NULL,location,NULL from session group by location");
+
+    /* modify session table to use location id*/
+    DB_query("CREATE TABLE session_tmp LIKE session");
+    DB_query("ALTER TABLE session_tmp CHANGE location location_id int not null");
+    DB_query("ALTER TABLE session_tmp DISABLE KEYS");
+    DB_query("INSERT INTO session_tmp SELECT id,date,(select id from locations where name=location),number_of_players,create_date FROM session");
+    DB_query("ALTER TABLE session_tmp ENABLE KEYS");
+    DB_query("RENAME TABLE session TO session_old");
+    DB_query("RENAME TABLE session_tmp TO session");
+    DB_query("DROP TABLE session_old");
+
+    DB_query("UPDATE version set version=2");
+    echo "Upgraded to version 2.\n";
   }
 
 ?>

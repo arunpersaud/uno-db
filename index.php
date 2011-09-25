@@ -622,7 +622,10 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 echo "<table>\n";
 	 echo "<thead><tr><th>ID</th><th>Date</th><th>Where</th><th>Number of Players</th></tr></thead>\n";
 	 echo "<tbody>\n";
-	 $datatmp = mysql_query("SELECT id,date,location,number_of_players FROM session ".($groupsize?" WHERE session.number_of_players=".DB_quote_smart($groupsize)."":"")." ORDER BY date DESC");
+	 $datatmp = mysql_query("SELECT session.id,date,locations.name,number_of_players ".
+				"FROM session ".
+				"LEFT JOIN locations on location_id=locations.id ".
+				($groupsize?" WHERE session.number_of_players=".DB_quote_smart($groupsize)."":"")." ORDER BY date DESC");
 	 while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
 	   {
 	     $id   = $dat[0]; /*id*/
@@ -638,7 +641,10 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
        {
 	 echo "<div class=\"games\">\n";
 	 $id = $_REQUEST["games"];
-	 $datatmp = mysql_query("SELECT date, location FROM session  WHERE id=".DB_quote_smart($id));
+	 $datatmp = mysql_query("SELECT date, locations.name ".
+				"FROM session ".
+				"LEFT JOIN locations ON locations.id=location_id ".
+				"WHERE id=".DB_quote_smart($id));
 	 $data    = mysql_fetch_array($datatmp, MYSQL_NUM);
 	 echo "<h2> Game ".$data[0]." ".$data[1]." </h2>\n";
 	 echo "<table>\n";
@@ -732,7 +738,10 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 $low_avgscore  = round($dat[0],3);
 	 $games_id      = $dat[2];
 	 /* get date and location */
-	 $locationtmp = mysql_query("SELECT date, location, number_of_players FROM session WHERE session.id='$low_sessionid'");
+	 $locationtmp = mysql_query("SELECT date, locations.name, number_of_players ".
+				    "FROM session ".
+				    "LEFT JOIN locations ON location_id=locations.id ".
+				    "WHERE session.id='$low_sessionid'");
 	 while($tdat = mysql_fetch_array($locationtmp, MYSQL_NUM))
 	   {
 	     $low_date     = $tdat[0];
@@ -777,7 +786,10 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 $high_avgscore  = round($dat[0],3);
 	 $games_id       = $dat[2];
 	 
-	 $tdatatmp = mysql_query("SELECT date, location, number_of_players FROM session WHERE session.id='$high_sessionid'");
+	 $tdatatmp = mysql_query("SELECT date, locations.name, number_of_players ".
+				 "FROM session ".
+				 "LEFT JOIN locations ON locations.id=location_id ".
+				 "WHERE session.id='$high_sessionid'");
 	 while($tdat= mysql_fetch_array($tdatatmp, MYSQL_NUM))
 	   {
 	     $high_date     = $tdat[0];
@@ -838,7 +850,10 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 $low_avgscore  = round($dat[0],3);
 	 $low_games_id  = $dat[2];
        };
-     $datatmp = mysql_query("SELECT date, location FROM session WHERE session.id='$low_sessionid'");
+     $datatmp = mysql_query("SELECT date, locations.name ".
+			    "FROM session ".
+			    "LEFT JOIN locations ON locations.id=location_id ".
+			    "WHERE session.id='$low_sessionid'");
      while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
        {
 	 $low_date = $dat[0];
@@ -856,7 +871,10 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 $high_avgscore  = round($dat[0],3);
 	 $high_games_id  = $dat[2];
        };
-     $datatmp = mysql_query("SELECT date, location FROM session WHERE session.id='$high_sessionid'");
+     $datatmp = mysql_query("SELECT date, locations.name ".
+			    "FROM session ".
+			    "LEFT JOIN locations ON locations.id=location_id ".
+			    "WHERE session.id='$high_sessionid'");
      while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
        {
 	 $high_date = $dat[0];
