@@ -619,7 +619,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
        {
 	 echo "<div class=\"games\">\n";
 	 echo "<h2> All Games </h2>\n";
-	 echo "<table>\n";
+	 echo "<table class=\"stats\" id=\"ScoreTable\">\n";
 	 echo "<thead><tr><th>ID</th><th>Date</th><th>Where</th><th>Number of Players</th></tr></thead>\n";
 	 echo "<tbody>\n";
 	 $datatmp = mysql_query("SELECT session.id,date,locations.name,number_of_players ".
@@ -715,7 +715,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
    {
      echo "<div class=\"games\">";
      echo "<h2>Low scoring games</h2>";
-     echo "<table>
+     echo "<table class=\"stats\" id=\"ScoreTable\">
   <thead><tr>
       <th>Points</th>
       <th>Date and Location</th>
@@ -765,7 +765,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
    {
      echo "<div class=\"games\">";
      echo "<h2>High scoring games</h2>";
-     echo "<table>
+     echo "<table class=\"stats\" id=\"ScoreTable\">
   <thead><tr>
       <th>Points</th>
       <th>Date and Location</th>
