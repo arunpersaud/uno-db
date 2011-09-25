@@ -2,7 +2,7 @@
 /*
  * index.php --  this is part of a web interface for UNO-darmstadt
  *
- * Copyright 2009,2010 Arun Persaud
+ * Copyright 2009,2010,2011 Arun Persaud
  *
  * ------------------------------------------------------------------------
  *
