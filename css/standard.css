@@ -25,19 +25,16 @@ body {
     height: 10em;
 }
 
-.header { 
-}
- 
-.header h1 {
+header h1 {
     text-align: center;
     background-color: #C5EFFD ;
     padding: 0.4em;
     border-top: solid 0.4em #006295;
 }
 
-.footer { border-top: solid 0.4em #006295; font-size:smaller;}
-.footer .copyright {float:left; width:30%}
-.footer .source {float:right; width:30%}
+footer { border-top: solid 0.4em #006295; font-size:smaller;}
+footer .copyright {float:left; width:30%}
+footer .source {float:right; width:30%}
 
 .menu {
     width:12em;

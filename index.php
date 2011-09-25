@@ -35,7 +35,7 @@ include('include/functions.php');
 
 error_reporting(E_ALL);
 
-output_header('svg');
+output_header();
 
 /* open database - always needed */
 DB_open($DB_HOST,$DB_USER,$DB_PASSWD,$DB_DB);

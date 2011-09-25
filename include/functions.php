@@ -178,36 +178,17 @@ function config_check()
  *
  ****************************************************/
 
-function output_header($type='xhtml')
+function output_header()
 {
-  switch($type)
-    {
-    case 'xhtml':
-      echo <<<END
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-  <head>
-     <title> Uno Statistics Admin Page</title>
-     <link rel="stylesheet" type="text/css" href="css/standard.css?v=1"/>
-  </head>
-<body>
-END;
-      break;
-    case 'svg':
-      header('Content-Type: text/xml; charset=iso-8859-1');
-       echo <<<END
-<!DOCTYPE html PUBLIC
-    "-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN"
-    "http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg-flat.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml" 
-      xmlns:svg="http://www.w3.org/2000/svg" 
-      xmlns:xlink="http://www.w3.org/1999/xlink">
+  echo <<<END
+<!DOCTYPE html>
+
+<html>
 
 <head>
   <title> Uno Statistics </title>
-  <meta http-equiv="Content-Type" content="text/xml; charset=ISO-8859-1" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
   <link rel="stylesheet" type="text/css" href="css/standard.css?v=2"/>	
   <script type="text/javascript" src="jquery.js"> </script>
   <script type="text/javascript" src="jquery.tablesorter.js"></script>
@@ -220,30 +201,31 @@ END;
 </head>
 <body>
 
+<header>
+  <h1>The UNO database </h1>
+</header>
+<img class="logo" src="draw4.png" alt="Draw 4+ logo" />
+
 END;
-      break;
-    }
-  echo '<div class="header">';
-  echo '  <h1>The UNO database </h1>';
-  echo "</div>\n";
-  echo '<img class="logo" src="draw4.png" alt="Draw 4+ logo" />';
 
 }
 
 function output_footer()
 {
-  echo"
+  echo <<<END
   </div>
 
-<div class=\"footer\"> 
-<div class=\"copyright\"> copyright 2010 Arun Persaud </div>
-<div class=\"source\">See the latest changes via <a href=\"http://uno-darmstadt.git.sourceforge.net/git/gitweb.cgi?p=uno-darmstadt/uno-darmstadt;a=summary\">git</a>
+<footer> 
+<div class="copyright"> copyright 2011 Arun Persaud </div>
+<div class="source">See the latest changes via <a href="http://uno-darmstadt.git.sourceforge.net/git/gitweb.cgi?p=uno-darmstadt/uno-darmstadt;a=summary">git</a>
 or download the source via
 'git clone git://uno-darmstadt.git.sourceforge.net/gitroot/uno-darmstadt/uno-darmstadt'   </div> 
-</div>
+</footer>
 
 </body>
-</html>";
+</html>
+
+END;
 
   return;
 }
