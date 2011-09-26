@@ -38,7 +38,7 @@ footer .source {float:right; width:30%}
 
 .menu {
     width:12em;
-    margin: 1em; 
+    margin: 1em;
     float:left;
 }
 
@@ -89,11 +89,11 @@ table.stats td, table.stats th {
   padding-right: 0.2em;
   border-right: solid 0.1em #000;
 }
-table.stats tr td:last-child, 
-table.stats tr th:last-child { 
-    border-right: solid 0 #000; 
+table.stats tr td:last-child,
+table.stats tr th:last-child {
+    border-right: solid 0 #000;
 }
-table.stats th { 
+table.stats th {
     min-width: 6em;
     border-bottom: solid 0.2em #000 }
 
@@ -117,7 +117,7 @@ table.stats thead tr .headerSortDown {
 table.stats thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
     background-color: #8dbdd8;
 }
-table.stats { 
+table.stats {
   margin: 0.5em 1em;
   border: solid 0.2em #aeaeae;
   -moz-border-radius: 0.5em ;

@@ -57,14 +57,14 @@ function DB_open($DB_HOST,$DB_USER,$DB_PASSWD,$DB_DB)
   global $db;
   if ( $db = mysql_connect($DB_HOST,$DB_USER, $DB_PASSWD))
     {
-      mysql_select_db($DB_DB) or die('Error: Could not select database');	
+      mysql_select_db($DB_DB) or die('Error: Could not select database');
     }
   else
     {
       echo mysql_errno() . ": " . mysql_error(). "\n";
       return -1;
     };
-  
+
   /* check database version */
   $version = DB_get_version();
   if ($version != $version_needed)
@@ -118,7 +118,7 @@ function DB_query_array($query)
       $return = DB_fetch_array($result);
       return $return;
     }
-  
+
   return NULL;
 }
 
@@ -189,7 +189,7 @@ function output_header()
 <head>
   <title> Uno Statistics </title>
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-  <link rel="stylesheet" type="text/css" href="css/standard.css?v=2"/>	
+  <link rel="stylesheet" type="text/css" href="css/standard.css?v=2"/>
   <script type="text/javascript" src="jquery.js"> </script>
   <script type="text/javascript" src="jquery.tablesorter.js"></script>
   <script type="text/javascript">
@@ -215,11 +215,11 @@ function output_footer()
   echo <<<END
   </div>
 
-<footer> 
+<footer>
 <div class="copyright"> copyright 2011 Arun Persaud </div>
 <div class="source">See the latest changes via <a href="http://uno-darmstadt.git.sourceforge.net/git/gitweb.cgi?p=uno-darmstadt/uno-darmstadt;a=summary">git</a>
 or download the source via
-'git clone git://uno-darmstadt.git.sourceforge.net/gitroot/uno-darmstadt/uno-darmstadt'   </div> 
+'git clone git://uno-darmstadt.git.sourceforge.net/gitroot/uno-darmstadt/uno-darmstadt'   </div>
 </footer>
 
 </body>
