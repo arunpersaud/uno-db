@@ -52,7 +52,7 @@ function DB_quote_smart($value)
 
 function DB_open($DB_HOST,$DB_USER,$DB_PASSWD,$DB_DB)
 {
-  $version_needed = 1;
+  $version_needed = 3;
 
   global $db;
   if ( $db = mysql_connect($DB_HOST,$DB_USER, $DB_PASSWD))
@@ -170,6 +170,23 @@ function config_check()
   return;
 }
 
+function myisset()
+{
+  /* returns 1 if all names passed as args are defined by a GET or POST statement,
+   * else return 0
+   */
+
+  $ok   = 1;
+  $args = func_get_args();
+
+  foreach($args as $arg)
+    {
+      $ok = $ok * isset($_REQUEST[$arg]);
+      /*echo "$arg: ok = $ok <br />";
+       */
+    }
+  return $ok;
+}
 
 
 /****************************************************

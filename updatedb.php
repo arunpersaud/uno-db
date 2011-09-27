@@ -48,7 +48,7 @@ if(isset($_SERVER['REMOTE_ADDR']))
   exit();
 
 $old_version = DB_get_version();
-$current_version = 2;
+$current_version = 3;
 
 if($old_version < $current_version)
   echo "Will upgrade your database now:\n";
@@ -95,6 +95,27 @@ switch($old_version)
 
     DB_query("UPDATE version set version=2");
     echo "Upgraded to version 2.\n";
+
+  case 2:
+    /* add table for variations */
+    DB_query("CREATE TABLE IF NOT EXISTS variations (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `create_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+      `name` varchar(30) DEFAULT NULL,
+      `short` varchar(30) DEFAULT NULL,
+      PRIMARY KEY (`id`)
+    )");
+
+    DB_query("INSERT into variations VALUES(NULL,NULL,'Uno default','Uno')");
+
+    DB_query("ALTER TABLE session".
+             " ADD COLUMN  `variation` INT(11) NOT NULL default 1 AFTER create_date");
+
+    /* change score value for winner from -1 to -9999, since new variations might allow negative scores */
+    DB_query("UPDATE scores SET score=-9999 where score=-1");
+
+    DB_query("UPDATE version set version=3");
+    echo "Upgraded to version 3.\n";
   }
 
 ?>
