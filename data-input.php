@@ -235,8 +235,8 @@ if(myisset('token', 'what')) // and test for token
 	  /* everything ok, submit to database */
 
 	  /* create session */
-	  echo "INSERT INTO session VALUES (NULL, $date, $location, $nplayer, NULL, $variation) <br/>";
-	  DB_query_array("INSERT INTO session VALUES (NULL, $date, $location, $nplayer, NULL, $variation)");
+	  //echo "INSERT INTO session VALUES (NULL, $date, $location, $nplayer, NULL, $variation) <br/>";
+	  DB_query_array("INSERT INTO session VALUES (NULL, '$date', '$location', '$nplayer', NULL, '$variation')");
 	  $session_id = mysql_insert_id();
 
 	  /* keep track of score, since we need to calculate the differences for each single score */
@@ -247,8 +247,8 @@ if(myisset('token', 'what')) // and test for token
 	  for($i=0;$i<$ngames; $i++)
 	    {
 	      /* create game id */
-	      echo "INSERT INTO games VALUES (NULL, $session_id, ".$ewbc[$i]." ) <br />";
-	      DB_query_array("INSERT INTO games VALUES (NULL, $session_id, ".$ewbc[$i]." )");
+	      //echo "INSERT INTO games VALUES (NULL, $session_id, ".$ewbc[$i]." ) <br />";
+	      DB_query_array("INSERT INTO games VALUES (NULL, '$session_id', '".$ewbc[$i]."' )");
 	      $game_id = mysql_insert_id();
 
 	      for($j=0; $j<$nplayer; $j++)
@@ -260,7 +260,7 @@ if(myisset('token', 'what')) // and test for token
 		  else
 		    $score = $score - $oldscore[$j];
 
-		  DB_query_array("INSERT INTO scores VALUES (NULL, $game_id, ".$players[$j].",$score, $j )");
+		  DB_query_array("INSERT INTO scores VALUES (NULL, '$game_id', '".$players[$j]."','$score', '$j' )");
 		  //echo " game $i: position: $j player:".$players[$j]." score: $score <br/>";
 
 		  /* remember old score */
@@ -296,16 +296,19 @@ else
 	 echo "<thead><tr><th>ID</th><th>Name</th><th>Coordinates</th><th>created</th><th></th></tr></thead>\n";
 	 echo "<tbody>\n";
          $datatmp = mysql_query("SELECT id,create_date,name,X(coordinates), Y(coordinates) FROM locations ORDER BY name");
-	 while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	 if($datatmp)
 	   {
-	     $id = $dat[0];
-	     $date  = $dat[1];
-	     $name  = $dat[2];
-	     $coorX  = $dat[3];
-	     $coorY  = $dat[4];
-	     echo "<tr><td>$id</td> <td>$name</td><td>$coorX $coorY</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
+	     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	       {
+		 $id = $dat[0];
+		 $date  = $dat[1];
+		 $name  = $dat[2];
+		 $coorX  = $dat[3];
+		 $coorY  = $dat[4];
+		 echo "<tr><td>$id</td> <td>$name</td><td>$coorX $coorY</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
+	       }
+	     echo "<tr><td></td> <td></td><td></td> <td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	   }
-	 echo "<tr><td></td> <td></td><td></td> <td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	 echo "</tbody></table>\n</div>\n";
 ?>
 <li class="players"> <button class="toggle">show/edit players</button>
@@ -314,14 +317,17 @@ else
 	 echo "<thead><tr><th>ID</th><th>Name</th><th>created</th><th></th></tr></thead>\n";
 	 echo "<tbody>\n";
          $datatmp = mysql_query("SELECT * FROM players ORDER BY name");
-	 while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	 if($datatmp)
 	   {
-	     $id = $dat[0];
-	     $date  = $dat[1];
-	     $name  = $dat[2];
-	     echo "<tr><td>$id</td> <td>$name</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
+	     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	       {
+		 $id = $dat[0];
+		 $date  = $dat[1];
+		 $name  = $dat[2];
+		 echo "<tr><td>$id</td> <td>$name</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
+	       }
+	     echo "<tr><td></td> <td></td><td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	   }
-	 echo "<tr><td></td> <td></td><td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	 echo "</tbody></table>\n</div>\n";
 ?>
 <li class="variations"> <button class="toggle">add/edit variations </button>
@@ -330,15 +336,18 @@ else
 	 echo "<thead><tr><th>ID</th><th>Name</th><th>short</th><th>created</th><th></th></tr></thead>\n";
 	 echo "<tbody>\n";
          $datatmp = mysql_query("SELECT * FROM variations");
-	 while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	 if($datatmp)
 	   {
-	     $id = $dat[0];
-	     $date  = $dat[1];
-	     $name  = $dat[2];
-	     $short  = $dat[3];
-	     echo "<tr><td>$id</td> <td>$name</td> <td>$short</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
+	     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	       {
+		 $id = $dat[0];
+		 $date  = $dat[1];
+		 $name  = $dat[2];
+		 $short  = $date[3];
+		 echo "<tr><td>$id</td> <td>$name</td> <td>$short</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
+	       }
+	     echo "<tr><td></td> <td></td> <td></td> <td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	   }
-	 echo "<tr><td></td> <td></td> <td></td> <td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	 echo "</tbody></table>\n</div>\n";
 ?>
 <li class="game"> <button class="gametoggle">add game</button>

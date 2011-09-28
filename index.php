@@ -301,17 +301,18 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 				" FROM scores ".
 				" LEFT JOIN games ON games.id=scores.game ".
 				" LEFT JOIN session ON session.id=games.session ".
-				" WHERE ".$varstr.
 				" LEFT JOIN players ON players.id=scores.player ".
-				" WHERE players.name=".DB_quote_smart($name));
+				" WHERE ".$varstr.
+				" AND players.name=".DB_quote_smart($name));
 	 $data    = mysql_fetch_array($datatmp, MYSQL_NUM);
 
 	 $winstmp = mysql_query("SELECT count(*) ".
-				"FROM scores ".
-				"LEFT JOIN players ON players.id=scores.player ".
+				" FROM scores ".
+				" LEFT JOIN players ON players.id=scores.player ".
 				" LEFT JOIN games ON games.id=scores.game ".
 				" LEFT JOIN session ON session.id=games.session ".
-				"WHERE players.name=".DB_quote_smart($name)." AND scores.score='-9999' AND ".$varstr);
+				" WHERE players.name=".DB_quote_smart($name).
+				" AND scores.score='-9999' AND ".$varstr);
 	 $wins    = mysql_fetch_array($winstmp, MYSQL_NUM);
 
 	 echo "<tr><td>$name</td><td>".$data[0]."</td>\n";
