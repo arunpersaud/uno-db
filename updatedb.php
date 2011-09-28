@@ -116,6 +116,21 @@ switch($old_version)
 
     DB_query("UPDATE version set version=3");
     echo "Upgraded to version 3.\n";
+
+  case 3:
+
+    /* add a backup table for the admin interface */
+    DB_query("CREATE TABLE IF NOT EXISTS backup (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `create_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+      `content` TEXT,
+      PRIMARY KEY (`id`)
+    )");
+
+    DB_query("UPDATE version set version=4");
+    echo "Upgraded to version 4.\n";
+
+
   }
 
 ?>

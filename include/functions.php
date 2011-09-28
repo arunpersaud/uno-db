@@ -52,7 +52,7 @@ function DB_quote_smart($value)
 
 function DB_open($DB_HOST,$DB_USER,$DB_PASSWD,$DB_DB)
 {
-  $version_needed = 3;
+  $version_needed = 4;
 
   global $db;
   if ( $db = mysql_connect($DB_HOST,$DB_USER, $DB_PASSWD))
