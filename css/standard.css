@@ -170,6 +170,11 @@ div.person-graph {
         fill-opacity:0.9;
 }
 
-div.cutandpaste span { 
-    padding-right: 1em ; 
+div.cutandpaste span {
+    padding-right: 1em ;
 }
+
+/*************data input*****/
+ul.datainput li table.stats {display:none;}
+ul.datainput li form {display:none;}
+ul.datainput li form table.stats {display:table;}
