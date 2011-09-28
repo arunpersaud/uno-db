@@ -65,7 +65,7 @@ if(myisset('token', 'what')) // and test for token
 
       /* validation */
       $ok=1;
-      if(!is_numeric($id)) $ok=-1;
+      if($id && !is_numeric($id)) $ok=-1;
       if(!preg_match('/^[a-zA-Z0-9 ]*$/',$loc)) $ok=-2;
       if(!preg_match('/^\s*$/',$coord)) $ok=-3;
       if(!preg_match('/^\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}:\d{2}$/',$time)) $ok=-4;
@@ -103,7 +103,7 @@ if(myisset('token', 'what')) // and test for token
 
       /* validation */
       $ok=1;
-      if(!is_numeric($id)) $ok=-1;
+      if($id && !is_numeric($id)) $ok=-1;
       if(!preg_match('/^[a-zA-Z0-9 ]*$/',$name)) $ok=-2;
       if(!preg_match('/^\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}:\d{2}$/',$time)) $ok=-3;
 
@@ -141,7 +141,7 @@ if(myisset('token', 'what')) // and test for token
 
       /* validation */
       $ok=1;
-      if(!is_numeric($id)) $ok=-1;
+      if($id && !is_numeric($id)) $ok=-1;
       if(!preg_match('/^[a-zA-Z0-9 ]*$/',$name)) $ok=-2;
       if(!preg_match('/^[a-zA-Z0-9 ]*$/',$short)) $ok=-3;
       if(!preg_match('/^\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}:\d{2}$/',$time)) $ok=-4;
