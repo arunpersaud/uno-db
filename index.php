@@ -139,7 +139,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 <ul>
 <?php
 echo "
-<li> <a href=\"index.php?".$options.""\">  Home </a> </li>
+<li> <a href=\"index.php?".$options."\">  Home </a> </li>
 <li><a href=\"index.php?total=games&amp;".$options."\">         all games      </a> </li>
 <li><a href=\"index.php?total=movingaverage&amp;".$options."\"> moving average </a> </li>\n"; ?>
 <li><a href="index.php?games=all&amp;".$options.""> all sessions</a></li>
