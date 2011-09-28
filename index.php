@@ -119,11 +119,11 @@ $datatmp = mysql_query("SELECT players.name, MAX(scores.id) as maxscore ".
 
 <div class="names">
 <h2>recent Players</h2>
-<p> list <a href="index.php?allplayers=1">all players</a> in the database. </p>
+<p> list <a href="index.php?allplayers=1&amp;$options">all players</a> in the database. </p>
 <ul>
 <?php
 while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
-  echo "<li><a href=\"index.php?name=".$who[0]."\">".$who[0]."</a></li>\n";
+  echo "<li><a href=\"index.php?name=".$who[0]."&amp;$options\">".$who[0]."</a></li>\n";
 ?>
 </ul>
 </div>
@@ -139,12 +139,12 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 <ul>
 <?php
 echo "
-<li> <a href=\"index.php?".$options."\">  Home </a> </li>
+<li> <a href=\"index.php?".$options.""\">  Home </a> </li>
 <li><a href=\"index.php?total=games&amp;".$options."\">         all games      </a> </li>
 <li><a href=\"index.php?total=movingaverage&amp;".$options."\"> moving average </a> </li>\n"; ?>
-<li><a href="index.php?games=all"> all sessions</a></li>
-<li><a href="index.php?lowest=1">  low  scoring sessions</a> </li>
-<li><a href="index.php?highest=1"> high scoring sessions</a> </li>
+<li><a href="index.php?games=all&amp;".$options.""> all sessions</a></li>
+<li><a href="index.php?lowest=1&amp;".$options."">  low  scoring sessions</a> </li>
+<li><a href="index.php?highest=1&amp;".$options.""> high scoring sessions</a> </li>
 <li><a href="data-input.php"> Admin </a> </li>
 </ul>
 
@@ -213,7 +213,7 @@ e.g. http://ebit....index.php?name=Frances:Theresa
 <ul>
 <?php
 while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
-  echo "<li><a href=\"index.php?name=".$who[0]."\">".$who[0]."</a></li>\n";
+  echo "<li><a href=\"index.php?name=".$who[0]."&amp;".$options."\">".$who[0]."</a></li>\n";
 ?>
 </ul>
 </div>
@@ -497,7 +497,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	   {
 	     $date=$dat[0];
 	     $id=$dat[1];
-	     echo "<li> <a href=\"index.php?games=$id\">$date</a> </li>\n";
+	     echo "<li> <a href=\"index.php?games=".$id."&amp".$options."\">$date</a> </li>\n";
 	   }
 	 echo "</ul></td>\n";
        }
@@ -543,7 +543,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	     $N  = $dat[4];
 	     $S  = $dat[5];
 	     if ($N>$mingames)
-	       echo "<tr><td><a href=\"index.php?name=".$n."\">$n</a></td> <td>$N</td><td>$s</td> <td>$a</td> <td>$S</td> </tr>\n";
+	       echo "<tr><td><a href=\"index.php?name=".$n."&amp;".$options."\">$n</a></td> <td>$N</td><td>$s</td> <td>$a</td> <td>$S</td> </tr>\n";
 	   }
 	 echo "</tbody></table>\n</div>\n";
        }
@@ -641,7 +641,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	     $name = $data[$i]['name'];
 
 	     $output = "";
-	     $output.= "<tr><td><a href=\"index.php?name=".$name."\">$name</a></td>";
+	     $output.= "<tr><td><a href=\"index.php?name=".$name."&amp;".$options."\">$name</a></td>";
 
 	     for($k=50; $k>0;$k-=10)
 	       {
@@ -734,7 +734,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 echo "<thead><tr>";
 	 foreach($names as $name =>$num)
 	   {
-	     echo "<th> <a href=\"index.php?name=".$name."\">".$name."</a> </th>";
+	     echo "<th> <a href=\"index.php?name=".$name."&amp;".$options."\">".$name."</a> </th>";
 	     $sumpoints[$name]=0;
 	   };
 	 echo "<th> </th></tr></thead>\n";
@@ -811,7 +811,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	   };
 	 echo "  <tr>
     <td>$low_avgscore</td>
-    <td><a href=\"index.php?games=$low_sessionid&amp;special=$games_id\">($low_date,$low_location)</a></td>
+    <td><a href=\"index.php?games=$low_sessionid&amp;special=$games_id&amp=$options\">($low_date,$low_location)</a></td>
     <td>$low_nop</td>
   </tr>\n";
        };
@@ -861,7 +861,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	   };
 	 echo "  <tr>
     <td>$high_avgscore</td>
-    <td><a href=\"index.php?games=$high_sessionid&amp;special=$games_id\">($high_date,$high_location)</a></td>
+    <td><a href=\"index.php?games=$high_sessionid&amp;special=$games_id&amp;$options\">($high_date,$high_location)</a></td>
     <td>$high_nop</td>
   </tr>\n";
        };
@@ -973,11 +973,11 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
   The smallest round of uno consists of $minpla players, the biggest one
   had $maxpla players, the average  is $avgpla.<br />
 
-  <a href=\"index.php?lowest=1\">lowest scoring game</a>
-  ever: $low_avgscore <a href=\"index.php?games=$low_sessionid&amp;special=$low_games_id\">($low_date,$low_location)</a><br />
+  <a href=\"index.php?lowest=1&amp;$options\">lowest scoring game</a>
+  ever: $low_avgscore <a href=\"index.php?games=$low_sessionid&amp;special=$low_games_id&amp;$options\">($low_date,$low_location)</a><br />
 
-  <a href=\"index.php?highest=1\">highest scoring game</a> ever: $high_avgscore
-  <a href=\"index.php?games=$high_sessionid&amp;special=$high_games_id\">($high_date,$high_location)</a>
+  <a href=\"index.php?highest=1&amp;$options\">highest scoring game</a> ever: $high_avgscore
+  <a href=\"index.php?games=$high_sessionid&amp;special=$high_games_id&amp;$options\">($high_date,$high_location)</a>
   </p>
    ";
 
