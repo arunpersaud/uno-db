@@ -289,7 +289,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 
      /* overall statistics */
      echo "<div class=\"games\">\n";
-     echo "<table>\n";
+     echo "<table class='stats'>\n";
      echo "<thead><tr><th>Name</th><th>Points</th><th>Average</th><th>Sigma</th><th>Number of Games </th><th>Wins</th></tr></thead>\n";
      echo "<tbody>\n";
      foreach($names as $name)
@@ -335,7 +335,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
        {
 	 echo "<div class=\"games\">\n ";
 	 if(sizeof($names)>1) echo "<h4> $name </h4>\n";
-	 echo "<table>\n";
+	 echo "<table class='stats'>\n";
 	 echo "<thead><tr><th>Groupsize</th><th>Points</th><th>Average</th><th>Sigma</th><th>Number of Games </th><th>Wins</th></tr></thead>\n";
 	 echo "<tbody>";
 	 for($N=$Nmin;$N<$Nmax;$N++)
@@ -402,7 +402,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 		     " WHERE ".$varstr.
 		     "GROUP BY scores.game ORDER BY games.id DESC");
 
-	 echo "<table border='1'>";
+	 echo "<table class='stats'>";
 	 echo "<thead>
   <tr>
   <td>total number of players</td>
@@ -472,7 +472,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
      /* games the player played in */
      echo "<div class=\"games\">\n";
      echo "<h4> the following games are in the database</h4>\n";
-     echo "<table><thead><tr>\n";
+     echo "<table class=\"stats\"><thead><tr>\n";
      foreach($names as $name)
        {
 	 echo "<th>$name</th>\n";
@@ -702,7 +702,7 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 				" AND ".$varstr);
 	 $data    = mysql_fetch_array($datatmp, MYSQL_NUM);
 	 echo "<h2> Game ".$data[0]." ".$data[1]." </h2>\n";
-	 echo "<table>\n";
+	 echo "<table class=\"stats\">\n";
 
 	 $points    = array(array());
 	 $sumpoints = array();
