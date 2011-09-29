@@ -373,7 +373,7 @@ else
 ?>
 </select> <br />
 <label for="date"> Date:</label><input type='date' name='date' id='date' placeholder='yyyy-mm-dd'>
-<p>Input points that are summed up already!</p>
+<p>Input running totals! Mark winner with a "-"</p>
 <table class="stats">
 <thead>
   <tr><th>End with black card</th> <th><button class="newplayer">new player</button></th></tr>

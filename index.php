@@ -141,16 +141,14 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 echo "
 <li> <a href=\"index.php?".$options."\">  Home </a> </li>
 <li><a href=\"index.php?total=games&amp;".$options."\">         all games      </a> </li>
-<li><a href=\"index.php?total=movingaverage&amp;".$options."\"> moving average </a> </li>\n"; ?>
-<li><a href="index.php?games=all&amp;".$options.""> all sessions</a></li>
-<li><a href="index.php?lowest=1&amp;".$options."">  low  scoring sessions</a> </li>
-<li><a href="index.php?highest=1&amp;".$options.""> high scoring sessions</a> </li>
-<li><a href="data-input.php"> Admin </a> </li>
+<li><a href=\"index.php?total=movingaverage&amp;".$options."\"> moving average </a> </li>
+<li><a href=\"index.php?games=all&amp;".$options."\"> all sessions</a></li>
+<li><a href=\"index.php?lowest=1&amp;".$options."\">  low  scoring sessions</a> </li>
+<li><a href=\"index.php?highest=1&amp;".$options."\"> high scoring sessions</a> </li>
+<li><a href=\"data-input.php\"> Admin </a> </li>
 </ul>
+<br /> ";
 
-<br />
-
-<?php
  echo "<form action=\"index.php" ;
 if(isset($_REQUEST["total"]))
   echo "?total=".$_REQUEST["total"]."";
@@ -697,9 +695,9 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 echo "<div class=\"games\">\n";
 	 $id = $_REQUEST["games"];
 	 $datatmp = mysql_query("SELECT date, locations.name ".
-				"FROM session ".
-				"LEFT JOIN locations ON locations.id=location_id ".
-				"WHERE id=".DB_quote_smart($id).
+				" FROM session ".
+				" LEFT JOIN locations ON locations.id=location_id ".
+				" WHERE session.id=".DB_quote_smart($id).
 				" AND ".$varstr);
 	 $data    = mysql_fetch_array($datatmp, MYSQL_NUM);
 	 echo "<h2> Game ".$data[0]." ".$data[1]." </h2>\n";
