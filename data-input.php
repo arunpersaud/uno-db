@@ -66,7 +66,7 @@ if(myisset('token', 'what')) // and test for token
       /* validation */
       $ok=1;
       if($id && !is_numeric($id)) $ok=-1;
-      if(!preg_match('/^[a-zA-Z0-9 ]*$/',$loc)) $ok=-2;
+      if(!preg_match('/^[a-zA-Z0-9 ,?\']*$/',$loc)) $ok=-2;
       if(!preg_match('/^\s*$/',$coord)) $ok=-3;
       if(!preg_match('/^\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}:\d{2}$/',$time)) $ok=-4;
 
@@ -80,15 +80,15 @@ if(myisset('token', 'what')) // and test for token
 	      $backup = "location: id:".$db_id[0]." date:".$db_id[1]." name:".$db_id[2]." X:".$db_id[3]." Y:".$db_id[4];
 	      DB_query("INSERT INTO backup VALUES (NULL, NULL, '$backup')");
 	      /* change value */
-	      DB_query("UPDATE locations SET create_date = '$time' WHERE id=$id");
-	      DB_query("UPDATE locations SET name = '$loc' WHERE id=$id");
+	      DB_query("UPDATE locations SET create_date = '".mysql_real_escape_string($time)."' WHERE id=$id");
+	      DB_query("UPDATE locations SET name = '".mysql_real_escape_string($loc)."' WHERE id=$id");
 
 	      echo "updated";
 	    }
 	  else
 	    {
 	      /* create new entry */
-	      DB_query("INSERT INTO locations VALUES (NULL, NULL, '$loc',NULL)");
+	      DB_query("INSERT INTO locations VALUES (NULL, NULL, '".mysql_real_escape_string($loc)."',NULL)");
 	      echo "created";
 	    }
 	}
@@ -117,15 +117,15 @@ if(myisset('token', 'what')) // and test for token
 	      $backup = "players: id:".$db_id[0]." date:".$db_id[1]." name:".$db_id[2];
 	      DB_query("INSERT INTO backup VALUES (NULL, NULL, '$backup')");
 	      /* change value */
-	      DB_query("UPDATE players SET create_date = '$time' WHERE id=$id");
-	      DB_query("UPDATE players SET name = '$name' WHERE id=$id");
+	      DB_query("UPDATE players SET create_date = '".mysql_real_escape_string($time)."' WHERE id=$id");
+	      DB_query("UPDATE players SET name = '".mysql_real_escape_string($name)."' WHERE id=$id");
 
 	      echo "updated";
 	    }
 	  else
 	    {
 	      /* create new entry */
-	      DB_query("INSERT INTO players VALUES (NULL, NULL, '$name')");
+	      DB_query("INSERT INTO players VALUES (NULL, NULL, '".mysql_real_escape_string($name)."')");
 	      echo "created";
 	    }
 	}
@@ -156,16 +156,18 @@ if(myisset('token', 'what')) // and test for token
 	      $backup = "variations: id:".$db_id[0]." date:".$db_id[1]." name:".$db_id[2]." short:".$db_id[3];
 	      DB_query("INSERT INTO backup VALUES (NULL, NULL, '$backup')");
 	      /* change value */
-	      DB_query("UPDATE variations SET create_date = '$time' WHERE id=$id");
-	      DB_query("UPDATE variations SET name  = '$name' WHERE id=$id");
-	      DB_query("UPDATE variations SET short = '$short' WHERE id=$id");
+	      DB_query("UPDATE variations SET create_date = '".mysql_real_escape_string($time)."' WHERE id=$id");
+	      DB_query("UPDATE variations SET name  = '".mysql_real_escape_string($name)."' WHERE id=$id");
+	      DB_query("UPDATE variations SET short = '".mysql_real_escape_string($short)."' WHERE id=$id");
 
 	      echo "updated";
 	    }
 	  else
 	    {
 	      /* create new entry */
-	      DB_query("INSERT INTO variations VALUES (NULL, NULL, '$name','$short')");
+	      DB_query("INSERT INTO variations VALUES (NULL, NULL, '".
+		       mysql_real_escape_string($name)."','".
+		       mysql_real_escape_string($short)."')");
 	      echo "created";
 	    }
 	}
@@ -236,7 +238,10 @@ if(myisset('token', 'what')) // and test for token
 
 	  /* create session */
 	  //echo "INSERT INTO session VALUES (NULL, $date, $location, $nplayer, NULL, $variation) <br/>";
-	  DB_query_array("INSERT INTO session VALUES (NULL, '$date', '$location', '$nplayer', NULL, '$variation')");
+	  DB_query_array("INSERT INTO session VALUES (NULL, '".mysql_real_escape_string($date)."', '".
+			 mysql_real_escape_string($location)."', '".
+			 mysql_real_escape_string($nplayer)."', NULL, '".
+			 mysql_real_escape_string($variation)."')");
 	  $session_id = mysql_insert_id();
 
 	  /* keep track of score, since we need to calculate the differences for each single score */
@@ -248,7 +253,9 @@ if(myisset('token', 'what')) // and test for token
 	    {
 	      /* create game id */
 	      //echo "INSERT INTO games VALUES (NULL, $session_id, ".$ewbc[$i]." ) <br />";
-	      DB_query_array("INSERT INTO games VALUES (NULL, '$session_id', '".$ewbc[$i]."' )");
+	      DB_query_array("INSERT INTO games VALUES (NULL, '".
+			     mysql_real_escape_string($session_id)."', '".
+			     mysql_real_escape_string($ewbc[$i])."' )");
 	      $game_id = mysql_insert_id();
 
 	      for($j=0; $j<$nplayer; $j++)
@@ -260,7 +267,9 @@ if(myisset('token', 'what')) // and test for token
 		  else
 		    $score = $score - $oldscore[$j];
 
-		  DB_query_array("INSERT INTO scores VALUES (NULL, '$game_id', '".$players[$j]."','$score', '$j' )");
+		  DB_query_array("INSERT INTO scores VALUES (NULL, '$game_id', '".
+				 mysql_real_escape_string($players[$j])."','".
+				 mysql_real_escape_string($score)."', '$j' )");
 		  //echo " game $i: position: $j player:".$players[$j]." score: $score <br/>";
 
 		  /* remember old score */
