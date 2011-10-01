@@ -414,7 +414,7 @@ $(".game form").submit(function(event) {
 function printselectplayer(i) {
    var html = "<select name=\"player"+(i-2)+"\">\n";
 <?php
- $datatmp = mysql_query("SELECT id,name FROM players");
+ $datatmp = mysql_query("SELECT id,name FROM players ORDER BY name ASC");
  while ($temp = mysql_fetch_assoc($datatmp))
   {
     echo 'html += "<option value=\''.$temp['id']."'>".$temp['name']."</option>\\n\";\n";
