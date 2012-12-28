@@ -195,6 +195,20 @@ function myisset()
  *
  ****************************************************/
 
+function autoversion($file)
+{
+  /* changes the file name of e.g. css/style.css to css/style.<md5>.css/js
+   * this way the browser can cache the file and will reload it if the file changed
+   * needs to have .htaccess set up correctly to link back to css/style.css */
+
+  /* only use it for file that have an absolut path */
+  if(!file_exists(dirname($_SERVER['SCRIPT_FILENAME']). '/' . $file))
+    return $file;
+
+  $md5 = md5_file(dirname($_SERVER['SCRIPT_FILENAME']). '/' . $file);
+  return preg_replace('{\\.([^./]+)$}', ".$md5.\$1", $file);
+}
+
 function output_header()
 {
 
@@ -206,7 +220,10 @@ function output_header()
 <head>
   <title> Uno Statistics </title>
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-  <link rel="stylesheet" type="text/css" href="css/standard.css?v=2"/>
+
+END;
+  echo '  <link rel="stylesheet" type="text/css" href="'.autoversion("css/standard.css").'"/>'."\n";
+  echo <<<END
 </head>
 <body>
 
@@ -230,9 +247,10 @@ function output_footer()
 or download the source via
 'git clone git://uno-darmstadt.git.sourceforge.net/gitroot/uno-darmstadt/uno-darmstadt'   </div>
 </footer>
-
-<script type="text/javascript" src="js/jquery.js"> </script>
-<script type="text/javascript" src="js/jquery.tablesorter.js"></script>
+END;
+  echo '<script type="text/javascript" src="'.autoversion("js/jquery.js").'"> </script>'."\n";
+  echo '<script type="text/javascript" src="'.autoversion("js/jquery.tablesorter.js").'"></script>'."\n";
+  echo <<<END
 <script type="text/javascript">
   $(document).ready(function()
     {
