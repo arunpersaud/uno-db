@@ -1,75 +1,13 @@
-/* reset CSS (taken from blueprint and modified a bit) */
-
-html, body, div, span,
-h1, h2, h3, h4, h5, h6, p,
-a,img,  dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, tbody, tfoot, thead, tr, th, td {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  vertical-align: baseline;
-}
-table { border-collapse: separate; border-spacing: 0; }
-caption, th, td { text-align: left; font-weight: normal; }
-table, td, th { vertical-align: middle; }
-
-/*  end reset */
-
-
-body {
-}
-
-.logo {
-    float: right;
-    height: 10em;
-}
-
-header h1 {
-    text-align: center;
-    background-color: #C5EFFD ;
-    padding: 0.4em;
-    border-top: solid 0.4em #006295;
-}
+.logo {   height: 3em; }
+.red { background-color:red; }
 
 footer { border-top: solid 0.4em #006295; font-size:smaller;}
 footer .copyright {float:left; width:30%}
 footer .source {float:right; width:30%}
 
-.menu {
-    width:12em;
-    margin: 1em;
-    float:left;
-}
-
-.menu ul {
-    text-align:left;
-    font-size: 1.4em;
-    border-bottom: 3px solid #000;
-    list-style: none;
-}
-.menu ul li{
-    margin: 0.2em;
-    padding: 0.2em;
-    background-color: #C5EFFD;
-}
-
-.menu ul li:hover {
-    background-color: #9BE1FB;
-}
-
-.menu li a {
-    text-decoration: none;
-    color: #000;
-}
-
-.menu fieldset {
-    width: 100%;
-    border: 1px solid #000;
-}
+.menu { margin: 0px 15px; }
 
 .names {
-    clear: left;
     padding: 2%;
 }
 
@@ -78,7 +16,6 @@ footer .source {float:right; width:30%}
 }
 
 .rest {
-    margin: auto 23% ;
     padding: 2%;
 }
 

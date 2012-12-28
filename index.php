@@ -165,18 +165,18 @@ echo "<fieldset> <legend> Options</legend> Variations:<br />\n";
 $datatmp = mysql_query("SELECT id,name,short FROM variations");
 while ($temp = mysql_fetch_assoc($datatmp))
   {
-    $id=$temp['id'];
-    $name=$temp['name'];
-    $short=$temp['short'];
-    echo "<input type=\"checkbox\" name=\"$short\" value=\"1\"";
-    if (in_array($id,$variations)) echo " checked=\"checked\" ";
-    echo  " />$short<br />\n";
+    $id    = $temp['id'];
+    $name  = $temp['name'];
+    $short = $temp['short'];
+    echo "<label class=\"checkbox inline\"><input type=\"checkbox\" name=\"$short\" value=\"1\"";
+    if (in_array($id,$variations)) echo " checked ";
+    echo  " />$short</label>\n";
   }
 
-echo " <p>include only people with a minimum number:
+echo " <p>min. number of games:
          <input name=\"mingames\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"$mingames\" />
-         games (0 for no minimum)</p>
-       <p>include only session with
+         per player(0 for no min.)</p>
+       <p>groupsize:
          <input name=\"groupsize\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"$groupsize\" /> players (0 for all)</p>
        <input type=\"submit\" value=\"update\" />";
 echo "</fieldset>

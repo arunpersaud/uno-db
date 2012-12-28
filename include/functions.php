@@ -215,23 +215,27 @@ function output_header()
   echo <<<END
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 
 <head>
   <title> Uno Statistics </title>
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 
 END;
+  echo '  <link rel="stylesheet/less" media="all" href="'.autoversion("css/bootstrap.less").'"/>'."\n";
   echo '  <link rel="stylesheet" type="text/css" href="'.autoversion("css/standard.css").'"/>'."\n";
+  echo '  <script src="'.autoversion("js/less.min.js").'" type="text/javascript"></script>'."\n";
   echo <<<END
 </head>
 <body>
 
-<header>
-  <h1>The UNO database </h1>
-</header>
-<img class="logo" src="draw4.png" alt="Draw 4+ logo" />
 
+<header>
+  <h1> <img class="logo" src="draw4.png" alt="Draw 4+ logo" />
+    The UNO database <small> All the game statistics you need</small></h1>
+</header>
+
+<div class="content">
 END;
 
 }
@@ -240,7 +244,7 @@ function output_footer()
 {
   echo <<<END
   </div>
-
+</div>
 <footer>
     <div class="copyright"> copyright 2011,2012 Arun Persaud </div>
 <div class="source">See the latest changes via <a href="http://uno-darmstadt.git.sourceforge.net/git/gitweb.cgi?p=uno-darmstadt/uno-darmstadt;a=summary">git</a>
@@ -250,11 +254,13 @@ or download the source via
 END;
   echo '<script type="text/javascript" src="'.autoversion("js/jquery.js").'"> </script>'."\n";
   echo '<script type="text/javascript" src="'.autoversion("js/jquery.tablesorter.js").'"></script>'."\n";
+  echo '<script type="text/javascript" src="'.autoversion("js/bootstrap.min.js").'"></script>'."\n";
+  echo '<script type="text/javascript" src="'.autoversion("js/layout.js").'"></script>'."\n";
   echo <<<END
 <script type="text/javascript">
   $(document).ready(function()
     {
-      $("#ScoreTable").tablesorter({ widgets: ['zebra']});
+      $("#ScoreTable").tablesorter();
     });
 </script>
 
