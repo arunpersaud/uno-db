@@ -2,7 +2,7 @@
 /*
  * updatedb.php --  this is part of a web interface for UNO-darmstadt
  *
- * Copyright 2010,2011 Arun Persaud
+ * Copyright 2010,2011,2012 Arun Persaud
  *
  * ------------------------------------------------------------------------
  *
