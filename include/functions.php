@@ -207,14 +207,6 @@ function output_header()
   <title> Uno Statistics </title>
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
   <link rel="stylesheet" type="text/css" href="css/standard.css?v=2"/>
-  <script type="text/javascript" src="jquery.js"> </script>
-  <script type="text/javascript" src="jquery.tablesorter.js"></script>
-  <script type="text/javascript">
-    $(document).ready(function()
-      {
-        $("#ScoreTable").tablesorter({ widgets: ['zebra']});
-      });
-  </script>
 </head>
 <body>
 
@@ -238,6 +230,15 @@ function output_footer()
 or download the source via
 'git clone git://uno-darmstadt.git.sourceforge.net/gitroot/uno-darmstadt/uno-darmstadt'   </div>
 </footer>
+
+<script type="text/javascript" src="js/jquery.js"> </script>
+<script type="text/javascript" src="js/jquery.tablesorter.js"></script>
+<script type="text/javascript">
+  $(document).ready(function()
+    {
+      $("#ScoreTable").tablesorter({ widgets: ['zebra']});
+    });
+</script>
 
 </body>
 </html>
