@@ -3,7 +3,7 @@
 /*
  * functions.php --  this is part of a web interface for UNO-darmstadt
  *
- * Copyright 2009,2010,2011,2012 Arun Persaud
+ * Copyright 2009,2010,2011,2012,2013 Arun Persaud
  *
  * ------------------------------------------------------------------------
  *
