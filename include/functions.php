@@ -222,9 +222,10 @@ function output_header()
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 
 END;
-  echo '  <link rel="stylesheet/less" media="all" href="'.autoversion("css/bootstrap.less").'"/>'."\n";
+  //  echo '  <link rel="stylesheet/less" media="all" href="'.autoversion("css/bootstrap.less").'"/>'."\n";
+  echo '  <link rel="stylesheet" media="all" href="'.autoversion("css/bootstrap.css").'"/>'."\n";
   echo '  <link rel="stylesheet" type="text/css" href="'.autoversion("css/standard.css").'"/>'."\n";
-  echo '  <script src="'.autoversion("js/less.min.js").'" type="text/javascript"></script>'."\n";
+  //  echo '  <script src="'.autoversion("js/less.min.js").'" type="text/javascript"></script>'."\n";
   echo <<<END
 </head>
 <body>
