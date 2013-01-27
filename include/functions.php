@@ -247,7 +247,7 @@ function output_footer()
   </div>
 </div>
 <footer>
-    <div class="copyright"> copyright 2011,2012 Arun Persaud </div>
+    <div class="copyright"> copyright 2011,2012,2013 Arun Persaud </div>
 <div class="source">See the latest changes via <a href="http://uno-darmstadt.git.sourceforge.net/git/gitweb.cgi?p=uno-darmstadt/uno-darmstadt;a=summary">git</a>
 or download the source via
 'git clone git://uno-darmstadt.git.sourceforge.net/gitroot/uno-darmstadt/uno-darmstadt'   </div>
