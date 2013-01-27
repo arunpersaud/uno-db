@@ -1,0 +1,10 @@
+RewriteEngine on
+
+# need to set this to your web path
+RewriteBase   /<path to web files>
+
+# hide git directory (and others)
+RedirectMatch 404 \.(git|cvs|svn|bzr|hg)(/.*|$)
+
+# use autoversioning of js, less, and css files
+RewriteRule ^(.*)\.[[:xdigit:]]{32}\.(css|js|less)$ $1.$2 [L]
