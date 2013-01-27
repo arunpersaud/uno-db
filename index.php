@@ -78,8 +78,8 @@ $options.="&amp;groupsize=$groupsize";
 $variations= array();
 
 /* check for selected variations */
-$datatmp = mysql_query("SELECT id,short FROM variations");
-while ($temp = mysql_fetch_assoc($datatmp))
+$datatmp = DB_query("SELECT id,short FROM variations");
+while ($temp = $datatmp->fetch_assoc())
   {
     $id    = $temp['id'];
     $short = $temp['short'];
@@ -106,15 +106,15 @@ $varstr = " variation IN (".implode(",",$variations).") ";
  *
  *************************************/
 
-$datatmp = mysql_query("SELECT players.name, MAX(scores.id) as maxscore ".
-		       " FROM scores ".
-		       " LEFT JOIN players ON players.id=scores.player ".
-		       " LEFT JOIN games ON games.id=scores.game ".
-		       " LEFT JOIN session ON session.id=games.session ".
-		       " WHERE ".$varstr.
-		       " GROUP BY players.name".
-		       " ORDER BY maxscore DESC".
-		       " LIMIT 20");
+$datatmp = DB_query("SELECT players.name, MAX(scores.id) as maxscore ".
+		    " FROM scores ".
+		    " LEFT JOIN players ON players.id=scores.player ".
+		    " LEFT JOIN games ON games.id=scores.game ".
+		    " LEFT JOIN session ON session.id=games.session ".
+		    " WHERE ".$varstr.
+		    " GROUP BY players.name".
+		    " ORDER BY maxscore DESC".
+		    " LIMIT 20");
 ?>
 
 <div class="names">
@@ -122,7 +122,7 @@ $datatmp = mysql_query("SELECT players.name, MAX(scores.id) as maxscore ".
 <p> list <a href="index.php?allplayers=1&amp;$options">all players</a> in the database. </p>
 <ul>
 <?php
-while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
+while($who = $datatmp->fetch_array(MYSQLI_NUM))
   echo "<li><a href=\"index.php?name=".$who[0]."&amp;$options\">".$who[0]."</a></li>\n";
 ?>
 </ul>
@@ -162,8 +162,8 @@ echo "\" method=\"post\">\n";
 echo "<fieldset> <legend> Options</legend> Variations:<br />\n";
 
 /* output selection for variations */
-$datatmp = mysql_query("SELECT id,name,short FROM variations");
-while ($temp = mysql_fetch_assoc($datatmp))
+$datatmp = DB_query("SELECT id,name,short FROM variations");
+while ($temp = $datatmp->fetch_assoc())
   {
     $id    = $temp['id'];
     $name  = $temp['name'];
@@ -198,7 +198,7 @@ echo "</div>\n";
 <?php
 if(isset($_REQUEST["allplayers"]))
   {
-    $datatmp = mysql_query("SELECT name FROM players ORDER BY name");
+    $datatmp = DB_query("SELECT name FROM players ORDER BY name");
 ?>
 
 <div class="allplayers">
@@ -210,7 +210,7 @@ e.g. http://ebit....index.php?name=Frances:Theresa
 </p>
 <ul>
 <?php
-while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
+while($who = $datatmp->fetch_array(MYSQLI_NUM))
   echo "<li><a href=\"index.php?name=".$who[0]."&amp;".$options."\">".$who[0]."</a></li>\n";
 ?>
 </ul>
@@ -227,12 +227,12 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
      /* do individual statistics */
 
      /* get the min/max number of players */
-     $Nmax = mysql_query("SELECT max(number_of_players) FROM session WHERE ".$varstr);
-     $Nmax = mysql_fetch_array($Nmax, MYSQL_NUM);
+     $Nmax = DB_query("SELECT max(number_of_players) FROM session WHERE ".$varstr);
+     $Nmax = $Nmax->fetch_array(MYSQLI_NUM);
      $Nmax = $Nmax[0];
 
-     $Nmin = mysql_query("SELECT min(number_of_players) FROM session WHERE ".$varstr);
-     $Nmin = mysql_fetch_array($Nmin, MYSQL_NUM);
+     $Nmin = DB_query("SELECT min(number_of_players) FROM session WHERE ".$varstr);
+     $Nmin = $Nmin->fetch_array(MYSQLI_NUM);
      $Nmin = $Nmin[0];
 
 
@@ -250,21 +250,21 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 
      foreach($names as $key=>$name)
        {
-	 $data   = mysql_query("SELECT id FROM players WHERE name=".DB_quote_smart($name));
-	 $nameid = mysql_fetch_array($data, MYSQL_NUM);
+	 $data   = DB_query("SELECT id FROM players WHERE name=".DB_quote_smart($name));
+	 $nameid = $data->fetch_array(MYSQLI_NUM);
 	 $nameid = $nameid[0];
 
 	 $ydata = array();
 
-	 $datatmp = mysql_query( "SELECT SUM( IF (scores.player='$nameid', ".
-				 "                IF(scores.score=-9999,0,scores.score), ".
-				 "                '0'))".
-				 " FROM scores ".
-				 " LEFT JOIN games ON games.id=scores.game ".
-				 " LEFT JOIN session ON session.id=games.session ".
-				 " WHERE ".$varstr.
-				 " group by scores.game ORDER BY session.date DESC");
-	 while($dat = mysql_fetch_array($datatmp, MYSQL_NUM))
+	 $datatmp = DB_query( "SELECT SUM( IF (scores.player='$nameid', ".
+			      "                IF(scores.score=-9999,0,scores.score), ".
+			      "                '0'))".
+			      " FROM scores ".
+			      " LEFT JOIN games ON games.id=scores.game ".
+			      " LEFT JOIN session ON session.id=games.session ".
+			      " WHERE ".$varstr.
+			      " group by scores.game ORDER BY session.date DESC");
+	 while($dat = $datatmp->fetch_array(MYSQLI_NUM))
 	   $ydata[]=$dat[0];
 	 $ydata[]=0;
 
@@ -292,26 +292,26 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
      echo "<tbody>\n";
      foreach($names as $name)
        {
-	 $datatmp = mysql_query("SELECT sum(IF(score=-9999,0,score)),".
-				"       avg(IF(score=-9999,0,score)),".
-				"       std(IF(score=-9999,0,score)),".
-				"       count(*) ".
-				" FROM scores ".
-				" LEFT JOIN games ON games.id=scores.game ".
-				" LEFT JOIN session ON session.id=games.session ".
-				" LEFT JOIN players ON players.id=scores.player ".
-				" WHERE ".$varstr.
-				" AND players.name=".DB_quote_smart($name));
-	 $data    = mysql_fetch_array($datatmp, MYSQL_NUM);
+	 $datatmp = DB_query("SELECT sum(IF(score=-9999,0,score)),".
+			     "       avg(IF(score=-9999,0,score)),".
+			     "       std(IF(score=-9999,0,score)),".
+			     "       count(*) ".
+			     " FROM scores ".
+			     " LEFT JOIN games ON games.id=scores.game ".
+			     " LEFT JOIN session ON session.id=games.session ".
+			     " LEFT JOIN players ON players.id=scores.player ".
+			     " WHERE ".$varstr.
+			     " AND players.name=".DB_quote_smart($name));
+	 $data    = $datatmp->fetch_array(MYSQLI_NUM);
 
-	 $winstmp = mysql_query("SELECT count(*) ".
-				" FROM scores ".
-				" LEFT JOIN players ON players.id=scores.player ".
-				" LEFT JOIN games ON games.id=scores.game ".
-				" LEFT JOIN session ON session.id=games.session ".
-				" WHERE players.name=".DB_quote_smart($name).
-				" AND scores.score='-9999' AND ".$varstr);
-	 $wins    = mysql_fetch_array($winstmp, MYSQL_NUM);
+	 $winstmp = DB_query("SELECT count(*) ".
+			     " FROM scores ".
+			     " LEFT JOIN players ON players.id=scores.player ".
+			     " LEFT JOIN games ON games.id=scores.game ".
+			     " LEFT JOIN session ON session.id=games.session ".
+			     " WHERE players.name=".DB_quote_smart($name).
+			     " AND scores.score='-9999' AND ".$varstr);
+	 $wins    = $winstmp->fetch_array(MYSQLI_NUM);
 
 	 echo "<tr><td>$name</td><td>".$data[0]."</td>\n";
 	 if(sizeof($names)==2)
@@ -339,28 +339,28 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 echo "<tbody>";
 	 for($N=$Nmin;$N<$Nmax;$N++)
 	   {
-	     $datatmp = mysql_query("SELECT sum(IF(score=-9999,0,score)),".
-				    "       avg(IF(score=-9999,0,score)),".
-				    "       std(IF(score=-9999,0,score)),".
-				    "       count(*)".
-				    " FROM scores ".
-				    "   LEFT JOIN players ON players.id=scores.player ".
-				    "   LEFT JOIN games   ON   games.id=scores.game ".
-				    "   LEFT JOIN session ON session.id=games.session ".
-				    "  WHERE players.name=".DB_quote_smart($name).
-				    "    AND session.number_of_players=$N ".
-				    "    AND ".$varstr);
-	     $data    = mysql_fetch_array($datatmp, MYSQL_NUM);
+	     $datatmp = DB_query("SELECT sum(IF(score=-9999,0,score)),".
+				 "       avg(IF(score=-9999,0,score)),".
+				 "       std(IF(score=-9999,0,score)),".
+				 "       count(*)".
+				 " FROM scores ".
+				 "   LEFT JOIN players ON players.id=scores.player ".
+				 "   LEFT JOIN games   ON   games.id=scores.game ".
+				 "   LEFT JOIN session ON session.id=games.session ".
+				 "  WHERE players.name=".DB_quote_smart($name).
+				 "    AND session.number_of_players=$N ".
+				 "    AND ".$varstr);
+	     $data    = $datatmp->fetch_array(MYSQLI_NUM);
 
-	     $winstmp = mysql_query("SELECT count(*) FROM scores ".
-				    "   LEFT JOIN players ON players.id=scores.player ".
-				    "   LEFT JOIN games   ON   games.id=scores.game ".
-				    "   LEFT JOIN session ON session.id=games.session ".
-				    "WHERE session.number_of_players=$N ".
-				    "  AND scores.score='-9999' ".
-				    "  AND ".$varstr.
-				    "  AND players.name=".DB_quote_smart($name));
-	     $wins    = mysql_fetch_array($winstmp, MYSQL_NUM);
+	     $winstmp = DB_query("SELECT count(*) FROM scores ".
+				 "   LEFT JOIN players ON players.id=scores.player ".
+				 "   LEFT JOIN games   ON   games.id=scores.game ".
+				 "   LEFT JOIN session ON session.id=games.session ".
+				 "WHERE session.number_of_players=$N ".
+				 "  AND scores.score='-9999' ".
+				 "  AND ".$varstr.
+				 "  AND players.name=".DB_quote_smart($name));
+	     $wins    = $winstmp->fetch_array(MYSQLI_NUM);
 
 	     echo "<tr><td>$N</td>";
 	     echo "<td>".$data[0]."</td>\n";
@@ -381,25 +381,25 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 // do analysis of who sits so and so many places away from person a, to get rid of that rumor once and for all ;)
 	 echo "<div class=\"rumor\">\n";
 	 echo "<h1>Anti - Rumor for ".$names[0]." ".$names[1]."</h1>\n<p> red means above the overall average, green below</p>";
-	 mysql_query("CREATE TEMPORARY TABLE rumor AS SELECT scores.game as game,".
-		     "SUM(CASE WHEN players.name='".$names[0]."' THEN scores.position ".
-		     "when players.name='".$names[1]."' THEN -scores.position ".
-		     "else '0' END) AS diffpos,".
-		     "SUM(CASE WHEN players.name='".$names[0]."' THEN scores.position+1 ".
-		     "ELSE '0' END) AS play1played,".
-		     "SUM(CASE WHEN players.name='".$names[1]."' THEN scores.position+1 ".
-		     "ELSE '0' END) AS play2played,".
-		     "SUM(CASE WHEN players.name='".$names[0]."' THEN IF(scores.score=-9999,0,scores.score) ".
-		     "ELSE '0' END) AS play1score,".
-		     "SUM(CASE WHEN players.name='".$names[1]."' THEN IF(scores.score=-9999,0,scores.score) ".
-		     "ELSE '0' END) AS play2score,".
-		     "session.number_of_players AS Nplayers ".
-		     "FROM scores ".
-		     "LEFT JOIN games   ON   games.id=scores.game ".
-		     "LEFT JOIN session ON session.id=games.session ".
-		     "LEFT JOIN players ON scores.player=players.id ".
-		     " WHERE ".$varstr.
-		     "GROUP BY scores.game ORDER BY games.id DESC");
+	 DB_query("CREATE TEMPORARY TABLE rumor AS SELECT scores.game as game,".
+		  "SUM(CASE WHEN players.name='".$names[0]."' THEN scores.position ".
+		  "when players.name='".$names[1]."' THEN -scores.position ".
+		  "else '0' END) AS diffpos,".
+		  "SUM(CASE WHEN players.name='".$names[0]."' THEN scores.position+1 ".
+		  "ELSE '0' END) AS play1played,".
+		  "SUM(CASE WHEN players.name='".$names[1]."' THEN scores.position+1 ".
+		  "ELSE '0' END) AS play2played,".
+		  "SUM(CASE WHEN players.name='".$names[0]."' THEN IF(scores.score=-9999,0,scores.score) ".
+		  "ELSE '0' END) AS play1score,".
+		  "SUM(CASE WHEN players.name='".$names[1]."' THEN IF(scores.score=-9999,0,scores.score) ".
+		  "ELSE '0' END) AS play2score,".
+		  "session.number_of_players AS Nplayers ".
+		  "FROM scores ".
+		  "LEFT JOIN games   ON   games.id=scores.game ".
+		  "LEFT JOIN session ON session.id=games.session ".
+		  "LEFT JOIN players ON scores.player=players.id ".
+		  " WHERE ".$varstr.
+		  "GROUP BY scores.game ORDER BY games.id DESC");
 
 	 echo "<table class='stats'>";
 	 echo "<thead>
@@ -411,15 +411,15 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
   </tr></thead><tbody>\n";
 	 for($N=2;$N<$Nmax;$N++)
 	   {
-	     $datatmp = mysql_query("SELECT AVG(play1score),".
-				    "       AVG(play2score),".
-				    "       IF(diffpos<0,diffpos+Nplayers,diffpos) as newdiff,".
-				    "       count(*) ".
-				    "FROM rumor ".
-				    "WHERE play1played<>0 AND play2played<>0 AND Nplayers=$N ".
-				    "GROUP BY newdiff ".
-				    "ORDER BY newdiff");
-	     while($dat = mysql_fetch_array($datatmp, MYSQL_NUM))
+	     $datatmp = DB_query("SELECT AVG(play1score),".
+				 "       AVG(play2score),".
+				 "       IF(diffpos<0,diffpos+Nplayers,diffpos) as newdiff,".
+				 "       count(*) ".
+				 "FROM rumor ".
+				 "WHERE play1played<>0 AND play2played<>0 AND Nplayers=$N ".
+				 "GROUP BY newdiff ".
+				 "ORDER BY newdiff");
+	     while($dat = $datatmp->fetch_array(MYSQLI_NUM))
 	       {
 		 $d0 = $dat[0];
 		 $d1 = $dat[1];
@@ -438,15 +438,15 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 		 echo round($d1,2)."</td><td> $d3 </td><td> $d4 </td></tr>\n";
 	       }
 	   }
-	 $datatmp = mysql_query("SELECT AVG(play1score),".
-				"       AVG(play2score),".
-				"       IF(diffpos<0, diffpos+Nplayers, diffpos) as newdiff,".
-				"       count(*)".
-				"FROM rumor ".
-				"WHERE play1played<>0 AND play2played<>0 ".
-				"GROUP BY newdiff ".
-				"ORDER BY newdiff");
-	 while($dat = mysql_fetch_array($datatmp, MYSQL_NUM))
+	 $datatmp = DB_query("SELECT AVG(play1score),".
+			     "       AVG(play2score),".
+			     "       IF(diffpos<0, diffpos+Nplayers, diffpos) as newdiff,".
+			     "       count(*)".
+			     "FROM rumor ".
+			     "WHERE play1played<>0 AND play2played<>0 ".
+			     "GROUP BY newdiff ".
+			     "ORDER BY newdiff");
+	 while($dat = $datatmp->fetch_array(MYSQLI_NUM))
 	   {
 	     $d0 = $dat[0];
 	     $d1 = $dat[1];
@@ -480,18 +480,18 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
      foreach($names as $name)
        {
 	 echo "<td>\n";
-	 $datatmp = mysql_query("SELECT session.date,".
-				"       session.id ".
-				"FROM scores LEFT JOIN players ON players.id=scores.player ".
-				"            LEFT JOIN games   ON   games.id=scores.game ".
-				"            LEFT JOIN session ON session.id=games.session ".
-				"WHERE players.name=".DB_quote_smart($name)." ".
-				" AND ".$varstr.
-				"GROUP BY session.id ".
-				"ORDER BY session.date");
+	 $datatmp = DB_query("SELECT session.date,".
+			     "       session.id ".
+			     "FROM scores LEFT JOIN players ON players.id=scores.player ".
+			     "            LEFT JOIN games   ON   games.id=scores.game ".
+			     "            LEFT JOIN session ON session.id=games.session ".
+			     "WHERE players.name=".DB_quote_smart($name)." ".
+			     " AND ".$varstr.
+			     "GROUP BY session.id ".
+			     "ORDER BY session.date");
 
 	 echo "<ul>\n";
-	 while($dat =  mysql_fetch_array($datatmp, MYSQL_NUM))
+	 while($dat =  $datatmp->fetch_array(MYSQLI_NUM))
 	   {
 	     $date=$dat[0];
 	     $id=$dat[1];
@@ -518,21 +518,21 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 echo "<table class=\"stats\" id=\"ScoreTable\">\n";
 	 echo "<thead><tr><th>Name</th><th>#Games</th><th>Sum</th><th>Average</th><th>Sigma</th></tr></thead>\n";
 	 echo "<tbody>\n";
-	 $datatmp = mysql_query("SELECT players.id,".
-				"       name,".
-				"       sum(IF(score=-9999,0,score)),".
-				"       avg(IF(score=-9999,0,score)),".
-				"       count(*) as cnt, ".
-				"       std(IF(score=-9999,0,score)) ".
-				"FROM scores ".
-				"   LEFT JOIN players ON players.id=scores.player ".
-				"   LEFT JOIN games   ON   games.id=scores.game ".
-				"   LEFT JOIN session ON session.id=games.session ".
-				" WHERE ".$varstr.
-				($groupsize?" AND session.number_of_players=".DB_quote_smart($groupsize)." ":"").
-				"GROUP BY players.id ".
-				"ORDER BY cnt DESC");
-	 while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	 $datatmp = DB_query("SELECT players.id,".
+			     "       name,".
+			     "       sum(IF(score=-9999,0,score)),".
+			     "       avg(IF(score=-9999,0,score)),".
+			     "       count(*) as cnt, ".
+			     "       std(IF(score=-9999,0,score)) ".
+			     "FROM scores ".
+			     "   LEFT JOIN players ON players.id=scores.player ".
+			     "   LEFT JOIN games   ON   games.id=scores.game ".
+			     "   LEFT JOIN session ON session.id=games.session ".
+			     " WHERE ".$varstr.
+			     ($groupsize?" AND session.number_of_players=".DB_quote_smart($groupsize)." ":"").
+			     "GROUP BY players.id ".
+			     "ORDER BY cnt DESC");
+	 while($dat= $datatmp->fetch_array(MYSQLI_NUM))
 	   {
 	     $id = $dat[0];
 	     $n  = $dat[1];
@@ -550,8 +550,8 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 echo "<div class=\"sorted-moving\">\n";
 
 	 /* get the number of players */
-	 $maxid = mysql_query("SELECT count(id) FROM players ");
-	 $maxid = mysql_fetch_array($maxid, MYSQL_NUM);
+	 $maxid = DB_query("SELECT count(id) FROM players ");
+	 $maxid = $maxid->fetch_array(MYSQLI_NUM);
 	 $maxid = $maxid[0];
 
 	 /* get the  last 50 games of each player */
@@ -559,19 +559,19 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 if($mingames>50) $mingames=50;
 	 for($i=1;$i<$maxid;$i++)
 	   {
-	     $datatmp = mysql_query( "SELECT IF(score=-9999,0,score) as scores, players.name ".
-				     "FROM scores LEFT JOIN players ON players.id=scores.player ".
-				     "            LEFT JOIN games   ON games.id=scores.game ".
-				     "            LEFT JOIN session ON session.id=games.session ".
-				     "WHERE scores.player=$i ".
-				     " AND ".$varstr.
-				     ($groupsize?" AND session.number_of_players=".DB_quote_smart($groupsize)." ":"").
-				     "ORDER BY session.date DESC, scores.id DESC ".
-				     "LIMIT 50");
+	     $datatmp = DB_query( "SELECT IF(score=-9999,0,score) as scores, players.name ".
+				  "FROM scores LEFT JOIN players ON players.id=scores.player ".
+				  "            LEFT JOIN games   ON games.id=scores.game ".
+				  "            LEFT JOIN session ON session.id=games.session ".
+				  "WHERE scores.player=$i ".
+				  " AND ".$varstr.
+				  ($groupsize?" AND session.number_of_players=".DB_quote_smart($groupsize)." ":"").
+				  "ORDER BY session.date DESC, scores.id DESC ".
+				  "LIMIT 50");
 
 	     $n=0;
 	     $data[$j] = array();
-	     while($score=mysql_fetch_array($datatmp, MYSQL_NUM))
+	     while($score=$datatmp->fetch_array(MYSQLI_NUM))
 	       {
 		 $data[$j]['name']=$score[1];
 		 $data[$j][] = $score[0];
@@ -674,12 +674,12 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 echo "<table class=\"stats\" id=\"ScoreTable\">\n";
 	 echo "<thead><tr><th>ID</th><th>Date</th><th>Where</th><th>Number of Players</th></tr></thead>\n";
 	 echo "<tbody>\n";
-	 $datatmp = mysql_query("SELECT session.id,date,locations.name,number_of_players ".
-				"FROM session ".
-				"LEFT JOIN locations on location_id=locations.id ".
-				" WHERE ".$varstr.
-				($groupsize?" AND session.number_of_players=".DB_quote_smart($groupsize)."":"")." ORDER BY date DESC");
-	 while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	 $datatmp = DB_query("SELECT session.id,date,locations.name,number_of_players ".
+			     "FROM session ".
+			     "LEFT JOIN locations on location_id=locations.id ".
+			     " WHERE ".$varstr.
+			     ($groupsize?" AND session.number_of_players=".DB_quote_smart($groupsize)."":"")." ORDER BY date DESC");
+	 while($dat= $datatmp->fetch_array(MYSQLI_NUM))
 	   {
 	     $id   = $dat[0]; /*id*/
 	     $date = $dat[1]; /*date*/
@@ -694,12 +694,12 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
        {
 	 echo "<div class=\"games\">\n";
 	 $id = $_REQUEST["games"];
-	 $datatmp = mysql_query("SELECT date, locations.name ".
-				" FROM session ".
-				" LEFT JOIN locations ON locations.id=location_id ".
-				" WHERE session.id=".DB_quote_smart($id).
-				" AND ".$varstr);
-	 $data    = mysql_fetch_array($datatmp, MYSQL_NUM);
+	 $datatmp = DB_query("SELECT date, locations.name ".
+			     " FROM session ".
+			     " LEFT JOIN locations ON locations.id=location_id ".
+			     " WHERE session.id=".DB_quote_smart($id).
+			     " AND ".$varstr);
+	 $data    = $datatmp->fetch_array(MYSQLI_NUM);
 	 echo "<h2> Game ".$data[0]." ".$data[1]." </h2>\n";
 	 echo "<table class=\"stats\">\n";
 
@@ -707,17 +707,17 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 $sumpoints = array();
 	 $names     = array();
 
-	 $datatmp = mysql_query("SELECT  scores.score,".
-				"        players.name,".
-				"        games.end_with_black_card,".
-				"        games.id ".
-				"FROM scores ".
-				" LEFT JOIN games ON games.id=scores.game ".
-				" LEFT JOIN players ON scores.player=players.id ".
-				" LEFT JOIN session ON session.id=games.session ".
-				" WHERE games.session=".DB_quote_smart($id).
-				" AND ".$varstr);
-	 while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	 $datatmp = DB_query("SELECT  scores.score,".
+			     "        players.name,".
+			     "        games.end_with_black_card,".
+			     "        games.id ".
+			     "FROM scores ".
+			     " LEFT JOIN games ON games.id=scores.game ".
+			     " LEFT JOIN players ON scores.player=players.id ".
+			     " LEFT JOIN session ON session.id=games.session ".
+			     " WHERE games.session=".DB_quote_smart($id).
+			     " AND ".$varstr);
+	 while($dat= $datatmp->fetch_array(MYSQLI_NUM))
 	   {
 	     $score  = $dat[0]; /*score*/
 	     $name   = $dat[1]; /*name*/
@@ -780,28 +780,28 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
       <th>Number of Players</th>
   </tr></thead>\n";
 
-     $datatmp = mysql_query("SELECT avg(IF(score=-9999,0,score)) as avgscore,".
-			    "       games.session, games.id ".
-			    "FROM scores ".
-			    "LEFT JOIN games ON scores.game=games.id ".
-			    "LEFT JOIN session ON session.id=games.session ".
-			    " WHERE ".$varstr.
-			    ($groupsize?" AND session.number_of_players=".DB_quote_smart($groupsize)." ":"").
-			    "GROUP BY games.id  ".
-			    "ORDER BY avgscore ".
-			    "LIMIT 15");
+     $datatmp = DB_query("SELECT avg(IF(score=-9999,0,score)) as avgscore,".
+			 "       games.session, games.id ".
+			 "FROM scores ".
+			 "LEFT JOIN games ON scores.game=games.id ".
+			 "LEFT JOIN session ON session.id=games.session ".
+			 " WHERE ".$varstr.
+			 ($groupsize?" AND session.number_of_players=".DB_quote_smart($groupsize)." ":"").
+			 "GROUP BY games.id  ".
+			 "ORDER BY avgscore ".
+			 "LIMIT 15");
 
-     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
        {
 	 $low_sessionid = $dat[1];
 	 $low_avgscore  = round($dat[0],3);
 	 $games_id      = $dat[2];
 	 /* get date and location */
-	 $locationtmp = mysql_query("SELECT date, locations.name, number_of_players ".
-				    "FROM session ".
-				    "LEFT JOIN locations ON location_id=locations.id ".
-				    "WHERE session.id='$low_sessionid'");
-	 while($tdat = mysql_fetch_array($locationtmp, MYSQL_NUM))
+	 $locationtmp = DB_query("SELECT date, locations.name, number_of_players ".
+				 "FROM session ".
+				 "LEFT JOIN locations ON location_id=locations.id ".
+				 "WHERE session.id='$low_sessionid'");
+	 while($tdat = $locationtmp->fetch_array(MYSQLI_NUM))
 	   {
 	     $low_date     = $tdat[0];
 	     $low_location = $tdat[1];
@@ -831,27 +831,27 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
       <th>Number of Players</th>
   </tr></thead>\n";
 
-     $datatmp = mysql_query("SELECT avg(IF(score=-9999,0,score)) as avgscore,".
-			    "       games.session, games.id ".
-			    "FROM scores ".
-			    "LEFT JOIN games ON scores.game=games.id ".
-			    "LEFT JOIN session ON session.id=games.session ".
-			    " WHERE ".$varstr.
-			    ($groupsize?" AND session.number_of_players=".DB_quote_smart($groupsize)." ":"").
-			    "GROUP BY games.id ".
-			    "ORDER BY avgscore DESC ".
-			    "LIMIT 15");
-     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+     $datatmp = DB_query("SELECT avg(IF(score=-9999,0,score)) as avgscore,".
+			 "       games.session, games.id ".
+			 "FROM scores ".
+			 "LEFT JOIN games ON scores.game=games.id ".
+			 "LEFT JOIN session ON session.id=games.session ".
+			 " WHERE ".$varstr.
+			 ($groupsize?" AND session.number_of_players=".DB_quote_smart($groupsize)." ":"").
+			 "GROUP BY games.id ".
+			 "ORDER BY avgscore DESC ".
+			 "LIMIT 15");
+     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
        {
 	 $high_sessionid = $dat[1];
 	 $high_avgscore  = round($dat[0],3);
 	 $games_id       = $dat[2];
 
-	 $tdatatmp = mysql_query("SELECT date, locations.name, number_of_players ".
-				 "FROM session ".
-				 "LEFT JOIN locations ON locations.id=location_id ".
-				 "WHERE session.id='$high_sessionid'");
-	 while($tdat= mysql_fetch_array($tdatatmp, MYSQL_NUM))
+	 $tdatatmp = DB_query("SELECT date, locations.name, number_of_players ".
+			      "FROM session ".
+			      "LEFT JOIN locations ON locations.id=location_id ".
+			      "WHERE session.id='$high_sessionid'");
+	 while($tdat= $tdatatmp->fetch_array(MYSQLI_NUM))
 	   {
 	     $high_date     = $tdat[0];
 	     $high_location = $tdat[1];
@@ -875,33 +875,33 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
      echo "<p> ";
 
      /* get average points */
-     $datatmp = mysql_query("SELECT avg(IF(score=-9999,0,score)),count(*) ".
-			    " FROM scores ".
-			    " LEFT JOIN games ON games.id=scores.game ".
-			    " LEFT JOIN session ON session.id=games.session ".
-			    " WHERE ".$varstr);
-     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+     $datatmp = DB_query("SELECT avg(IF(score=-9999,0,score)),count(*) ".
+			 " FROM scores ".
+			 " LEFT JOIN games ON games.id=scores.game ".
+			 " LEFT JOIN session ON session.id=games.session ".
+			 " WHERE ".$varstr);
+     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
        {
 	 $scores  = $dat[1];
 	 $average  = round($dat[0],2);
        };
      /* get average points for games that ended with a black card */
-     $datatmp = mysql_query("SELECT avg(IF(score=-9999,0,score)),count(*) ".
-			    "FROM scores ".
-			    "LEFT JOIN games ON scores.game=games.id ".
-			    " LEFT JOIN session ON session.id=games.session ".
-			    "WHERE games.end_with_black_card='1'".
-			    " AND ".$varstr);
-     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+     $datatmp = DB_query("SELECT avg(IF(score=-9999,0,score)),count(*) ".
+			 "FROM scores ".
+			 "LEFT JOIN games ON scores.game=games.id ".
+			 " LEFT JOIN session ON session.id=games.session ".
+			 "WHERE games.end_with_black_card='1'".
+			 " AND ".$varstr);
+     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
        {
 	 $blackscores  = $dat[1];
 	 $blackaverage  = round($dat[0],2);
        };
      /* get statistics about how many player are in a round */
-     $datatmp = mysql_query("SELECT count(*),MIN(number_of_players),MAX(number_of_players), AVG(number_of_players) ".
-			    " FROM session ".
-			    " WHERE ".$varstr);
-     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+     $datatmp = DB_query("SELECT count(*),MIN(number_of_players),MAX(number_of_players), AVG(number_of_players) ".
+			 " FROM session ".
+			 " WHERE ".$varstr);
+     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
        {
 	 $session  = $dat[0];
 	 $minpla = $dat[1];
@@ -909,51 +909,51 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
 	 $maxpla = $dat[2];
        };
      /* get lowest scoring game */
-     $datatmp = mysql_query("SELECT avg(IF(score=-9999,0,score)) as avgscore,games.session,games.id ".
-			    "FROM scores ".
-			    "LEFT JOIN games ON scores.game=games.id ".
-			    " LEFT JOIN session ON session.id=games.session ".
-			    " WHERE ".$varstr.
-			    "GROUP BY games.id ".
-			    "ORDER BY avgscore ".
-			    "LIMIT 1");
-     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+     $datatmp = DB_query("SELECT avg(IF(score=-9999,0,score)) as avgscore,games.session,games.id ".
+			 "FROM scores ".
+			 "LEFT JOIN games ON scores.game=games.id ".
+			 " LEFT JOIN session ON session.id=games.session ".
+			 " WHERE ".$varstr.
+			 "GROUP BY games.id ".
+			 "ORDER BY avgscore ".
+			 "LIMIT 1");
+     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
        {
 	 $low_sessionid = $dat[1];
 	 $low_avgscore  = round($dat[0],3);
 	 $low_games_id  = $dat[2];
        };
-     $datatmp = mysql_query("SELECT date, locations.name ".
-			    "FROM session ".
-			    "LEFT JOIN locations ON locations.id=location_id ".
-			    "WHERE session.id='$low_sessionid'".
-			    " AND ".$varstr);
-     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+     $datatmp = DB_query("SELECT date, locations.name ".
+			 "FROM session ".
+			 "LEFT JOIN locations ON locations.id=location_id ".
+			 "WHERE session.id='$low_sessionid'".
+			 " AND ".$varstr);
+     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
        {
 	 $low_date = $dat[0];
 	 $low_location = $dat[1];
        };
      /* highest */
-     $datatmp = mysql_query("SELECT avg(IF(score=-9999,0,score))as avgscore,games.session,games.id ".
-			    "FROM scores ".
-			    "LEFT JOIN games ON scores.game=games.id ".
-			    " LEFT JOIN session ON session.id=games.session ".
-			    " WHERE ".$varstr.
-			    "GROUP BY games.id ".
-			    "ORDER BY avgscore DESC ".
-			    "LIMIT 1");
-     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+     $datatmp = DB_query("SELECT avg(IF(score=-9999,0,score))as avgscore,games.session,games.id ".
+			 "FROM scores ".
+			 "LEFT JOIN games ON scores.game=games.id ".
+			 " LEFT JOIN session ON session.id=games.session ".
+			 " WHERE ".$varstr.
+			 "GROUP BY games.id ".
+			 "ORDER BY avgscore DESC ".
+			 "LIMIT 1");
+     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
        {
 	 $high_sessionid = $dat[1];
 	 $high_avgscore  = round($dat[0],3);
 	 $high_games_id  = $dat[2];
        };
-     $datatmp = mysql_query("SELECT date, locations.name ".
-			    "FROM session ".
-			    "LEFT JOIN locations ON locations.id=location_id ".
-			    "WHERE session.id='$high_sessionid'".
-			    " AND ".$varstr);
-     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+     $datatmp = DB_query("SELECT date, locations.name ".
+			 "FROM session ".
+			 "LEFT JOIN locations ON locations.id=location_id ".
+			 "WHERE session.id='$high_sessionid'".
+			 " AND ".$varstr);
+     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
        {
 	 $high_date = $dat[0];
 	 $high_location = $dat[1];
@@ -982,5 +982,5 @@ while($who = mysql_fetch_array($datatmp, MYSQL_NUM))
    }
 
 output_footer();
-mysql_close($db);
+DB_close();
 ?>

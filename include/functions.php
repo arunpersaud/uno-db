@@ -31,19 +31,6 @@
  *        Arun
  */
 
-function DB_quote_smart($value)
-{
-    /* Stripslashes */
-    if (get_magic_quotes_gpc()) {
-        $value = stripslashes($value);
-    }
-    /* Quote if not a number or a numeric string */
-    if (!is_numeric($value)) {
-        $value = "'" . mysql_real_escape_string($value) . "'";
-    }
-    return $value;
-}
-
 /**************************************************
  *
  * DB - functions -- mysql backend
@@ -55,13 +42,10 @@ function DB_open($DB_HOST,$DB_USER,$DB_PASSWD,$DB_DB)
   $version_needed = 4;
 
   global $db;
-  if ( $db = mysql_connect($DB_HOST,$DB_USER, $DB_PASSWD))
+  $db = new mysqli($DB_HOST,$DB_USER, $DB_PASSWD, $DB_DB);
+  if ( $db->connect_errno )
     {
-      mysql_select_db($DB_DB) or die('Error: Could not select database');
-    }
-  else
-    {
-      echo mysql_errno() . ": " . mysql_error(). "\n";
+      echo "Failed to connect to Mysql ".$db->connect_error." (".$db->connect_errno.")\n";
       return -1;
     };
 
@@ -73,11 +57,35 @@ function DB_open($DB_HOST,$DB_USER,$DB_PASSWD,$DB_DB)
   return 0;
 }
 
+
+function DB_close()
+{
+  global $db;
+  $db->close();
+  return;
+}
+
+function DB_quote_smart($value)
+{
+    global $db;
+    /* Stripslashes */
+    if (get_magic_quotes_gpc()) {
+        $value = stripslashes($value);
+    }
+    /* Quote if not a number or a numeric string */
+    if (!is_numeric($value)) {
+        $value = "'" . $db->real_escape_string($value) . "'";
+	$value = addcslashes($value, '%_');
+    }
+    return $value;
+}
+
 function DB_query($query)
 {
+  global $db;
   /* debug/optimize the database
   $time = microtime();
-  $return = mysql_query($query);
+  $return = $db->query($query);
   $time = $time - microtime();
 
   if($time > 0.05) // this way we can find only the long ones
@@ -91,22 +99,18 @@ function DB_query($query)
   return $return;
   */
 
-  return mysql_query($query);
+  return $db->query($query);
 }
 
 function DB_fetch_array($result)
 {
-  return mysql_fetch_array($result,MYSQL_NUM);
+  return $result->fetch_array(MYSQLI_NUM);
 }
 
 function DB_insert_id()
 {
-  return mysql_insert_id();
-}
-
-function DB_num_rows($result)
-{
-  return mysql_num_rows($result);
+  global $db;
+  return $db->insert_id;
 }
 /* end Mysql functions */
 
@@ -257,6 +261,7 @@ END;
   echo '<script type="text/javascript" src="'.autoversion("js/jquery.tablesorter.js").'"></script>'."\n";
   echo '<script type="text/javascript" src="'.autoversion("js/bootstrap.min.js").'"></script>'."\n";
   echo '<script type="text/javascript" src="'.autoversion("js/layout.js").'"></script>'."\n";
+  echo '<script type="text/javascript" src="'.autoversion("js/input.js").'"></script>'."\n";
   echo <<<END
 <script type="text/javascript">
   $(document).ready(function()

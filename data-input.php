@@ -36,12 +36,12 @@ include('include/functions.php');
 /*
  * open database
  */
-if( $db = mysql_connect($DB_HOST,$DB_USER, $DB_PASSWD) )
+$db = new mysqli($DB_HOST,$DB_USER, $DB_PASSWD, $DB_DB);
+if ( $db->connect_errno )
   {
-    mysql_select_db($DB_DB) or die('Could not select database');
-  }
- else
-   die (mysql_error());
+    echo "Failed to connect to Mysql ".$DB->connect_error." (".$DB->connect_errno.")\n";
+    die("Couldn't connect to database");
+  };
 
 /* generate token */
 
@@ -80,15 +80,15 @@ if(myisset('token', 'what')) // and test for token
 	      $backup = "location: id:".$db_id[0]." date:".$db_id[1]." name:".$db_id[2]." X:".$db_id[3]." Y:".$db_id[4];
 	      DB_query("INSERT INTO backup VALUES (NULL, NULL, '$backup')");
 	      /* change value */
-	      DB_query("UPDATE locations SET create_date = '".mysql_real_escape_string($time)."' WHERE id=$id");
-	      DB_query("UPDATE locations SET name = '".mysql_real_escape_string($loc)."' WHERE id=$id");
+	      DB_query("UPDATE locations SET create_date = '".DB_quote_smart($time)."' WHERE id=$id");
+	      DB_query("UPDATE locations SET name = '".DB_quote_smart($loc)."' WHERE id=$id");
 
 	      echo "updated";
 	    }
 	  else
 	    {
 	      /* create new entry */
-	      DB_query("INSERT INTO locations VALUES (NULL, NULL, '".mysql_real_escape_string($loc)."',NULL)");
+	      DB_query("INSERT INTO locations VALUES (NULL, NULL, '".DB_quote_smart($loc)."',NULL)");
 	      echo "created";
 	    }
 	}
@@ -117,15 +117,15 @@ if(myisset('token', 'what')) // and test for token
 	      $backup = "players: id:".$db_id[0]." date:".$db_id[1]." name:".$db_id[2];
 	      DB_query("INSERT INTO backup VALUES (NULL, NULL, '$backup')");
 	      /* change value */
-	      DB_query("UPDATE players SET create_date = '".mysql_real_escape_string($time)."' WHERE id=$id");
-	      DB_query("UPDATE players SET name = '".mysql_real_escape_string($name)."' WHERE id=$id");
+	      DB_query("UPDATE players SET create_date = '".DB_quote_smart($time)."' WHERE id=$id");
+	      DB_query("UPDATE players SET name = '".DB_quote_smart($name)."' WHERE id=$id");
 
 	      echo "updated";
 	    }
 	  else
 	    {
 	      /* create new entry */
-	      DB_query("INSERT INTO players VALUES (NULL, NULL, '".mysql_real_escape_string($name)."')");
+	      DB_query("INSERT INTO players VALUES (NULL, NULL, '".DB_quote_smart($name)."')");
 	      echo "created";
 	    }
 	}
@@ -156,9 +156,9 @@ if(myisset('token', 'what')) // and test for token
 	      $backup = "variations: id:".$db_id[0]." date:".$db_id[1]." name:".$db_id[2]." short:".$db_id[3];
 	      DB_query("INSERT INTO backup VALUES (NULL, NULL, '$backup')");
 	      /* change value */
-	      DB_query("UPDATE variations SET create_date = '".mysql_real_escape_string($time)."' WHERE id=$id");
-	      DB_query("UPDATE variations SET name  = '".mysql_real_escape_string($name)."' WHERE id=$id");
-	      DB_query("UPDATE variations SET short = '".mysql_real_escape_string($short)."' WHERE id=$id");
+	      DB_query("UPDATE variations SET create_date = '".DB_quote_smart($time)."' WHERE id=$id");
+	      DB_query("UPDATE variations SET name  = '".DB_quote_smart($name)."' WHERE id=$id");
+	      DB_query("UPDATE variations SET short = '".DB_quote_smart($short)."' WHERE id=$id");
 
 	      echo "updated";
 	    }
@@ -166,8 +166,8 @@ if(myisset('token', 'what')) // and test for token
 	    {
 	      /* create new entry */
 	      DB_query("INSERT INTO variations VALUES (NULL, NULL, '".
-		       mysql_real_escape_string($name)."','".
-		       mysql_real_escape_string($short)."')");
+		       DB_quote_smart($name)."','".
+		       DB_quote_smart($short)."')");
 	      echo "created";
 	    }
 	}
@@ -238,11 +238,11 @@ if(myisset('token', 'what')) // and test for token
 
 	  /* create session */
 	  //echo "INSERT INTO session VALUES (NULL, $date, $location, $nplayer, NULL, $variation) <br/>";
-	  DB_query_array("INSERT INTO session VALUES (NULL, '".mysql_real_escape_string($date)."', '".
-			 mysql_real_escape_string($location)."', '".
-			 mysql_real_escape_string($nplayer)."', NULL, '".
-			 mysql_real_escape_string($variation)."')");
-	  $session_id = mysql_insert_id();
+	  DB_query_array("INSERT INTO session VALUES (NULL, '".DB_quote_smart($date)."', '".
+			 DB_quote_smart($location)."', '".
+			 DB_quote_smart($nplayer)."', NULL, '".
+			 DB_quote_smart($variation)."')");
+	  $session_id = DB_insert_id();
 
 	  /* keep track of score, since we need to calculate the differences for each single score */
 	  for($j=0; $j<$nplayer; $j++)
@@ -254,9 +254,9 @@ if(myisset('token', 'what')) // and test for token
 	      /* create game id */
 	      //echo "INSERT INTO games VALUES (NULL, $session_id, ".$ewbc[$i]." ) <br />";
 	      DB_query_array("INSERT INTO games VALUES (NULL, '".
-			     mysql_real_escape_string($session_id)."', '".
-			     mysql_real_escape_string($ewbc[$i])."' )");
-	      $game_id = mysql_insert_id();
+			     DB_quote_smart($session_id)."', '".
+			     DB_quote_smart($ewbc[$i])."' )");
+	      $game_id = DB_insert_id();
 
 	      for($j=0; $j<$nplayer; $j++)
 		{
@@ -268,8 +268,8 @@ if(myisset('token', 'what')) // and test for token
 		    $score = $score - $oldscore[$j];
 
 		  DB_query_array("INSERT INTO scores VALUES (NULL, '$game_id', '".
-				 mysql_real_escape_string($players[$j])."','".
-				 mysql_real_escape_string($score)."', '$j' )");
+				 DB_quote_smart($players[$j])."','".
+				 DB_quote_smart($score)."', '$j' )");
 		  //echo " game $i: position: $j player:".$players[$j]." score: $score <br/>";
 
 		  /* remember old score */
@@ -301,13 +301,13 @@ else
 <ul class="datainput">
 <li class="locations"> <button class="toggle">show/edit locations</button>
 <?php
-	 echo "<table class=\"stats\" >\n";
+	 echo "<table class=\"stats\">\n";
 	 echo "<thead><tr><th>ID</th><th>Name</th><th>Coordinates</th><th>created</th><th></th></tr></thead>\n";
 	 echo "<tbody>\n";
-         $datatmp = mysql_query("SELECT id,create_date,name,X(coordinates), Y(coordinates) FROM locations ORDER BY name");
+         $datatmp = DB_query("SELECT id,create_date,name,X(coordinates), Y(coordinates) FROM locations ORDER BY name");
 	 if($datatmp)
 	   {
-	     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
 	       {
 		 $id = $dat[0];
 		 $date  = $dat[1];
@@ -318,17 +318,17 @@ else
 	       }
 	     echo "<tr><td></td> <td></td><td></td> <td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	   }
-	 echo "</tbody></table>\n</div>\n";
+	 echo "</tbody></table>\n";
 ?>
 <li class="players"> <button class="toggle">show/edit players</button>
 <?php
 	 echo "<table class=\"stats\" >\n";
 	 echo "<thead><tr><th>ID</th><th>Name</th><th>created</th><th></th></tr></thead>\n";
 	 echo "<tbody>\n";
-         $datatmp = mysql_query("SELECT * FROM players ORDER BY name");
+         $datatmp = DB_query("SELECT * FROM players ORDER BY name");
 	 if($datatmp)
 	   {
-	     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
 	       {
 		 $id = $dat[0];
 		 $date  = $dat[1];
@@ -337,17 +337,17 @@ else
 	       }
 	     echo "<tr><td></td> <td></td><td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	   }
-	 echo "</tbody></table>\n</div>\n";
+	 echo "</tbody></table>\n";
 ?>
 <li class="variations"> <button class="toggle">add/edit variations </button>
 <?php
 	 echo "<table class=\"stats\" >\n";
 	 echo "<thead><tr><th>ID</th><th>Name</th><th>short</th><th>created</th><th></th></tr></thead>\n";
 	 echo "<tbody>\n";
-         $datatmp = mysql_query("SELECT * FROM variations");
+         $datatmp = DB_query("SELECT * FROM variations");
 	 if($datatmp)
 	   {
-	     while($dat= mysql_fetch_array($datatmp, MYSQL_NUM))
+	     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
 	       {
 		 $id = $dat[0];
 		 $date  = $dat[1];
@@ -357,7 +357,7 @@ else
 	       }
 	     echo "<tr><td></td> <td></td> <td></td> <td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	   }
-	 echo "</tbody></table>\n</div>\n";
+	 echo "</tbody></table>\n";
 ?>
 <li class="game"> <button class="gametoggle">add game</button>
 <form action="data-input.php" method="post">
@@ -365,8 +365,8 @@ else
 <input type="hidden" name="what"  value="game">
 <label for="variation"> Variation:</label> <select name='variation' id='variation'>
 <?php
- $datatmp = mysql_query("SELECT id,name FROM variations");
- while ($temp = mysql_fetch_assoc($datatmp))
+ $datatmp = DB_query("SELECT id,name FROM variations");
+ while ($temp = $datatmp->fetch_assoc())
   {
     echo "<option value='".$temp['id']."'>".$temp['name']."</option>\n";
   }
@@ -374,8 +374,8 @@ else
 </select><br />
 <label for="location"> Location:</label> <select name='location' id='location'>
 <?php
- $datatmp = mysql_query("SELECT id,name FROM locations");
- while ($temp = mysql_fetch_assoc($datatmp))
+ $datatmp = DB_query("SELECT id,name FROM locations");
+ while ($temp = $datatmp->fetch_assoc())
   {
     echo "<option value='".$temp['id']."'>".$temp['name']."</option>\n";
   }
@@ -398,24 +398,12 @@ else
 
 <script>
 
-
-$(".game form").submit(function(event) {
-
-    /* stop form from submitting normally */
-    event.preventDefault();
-
-    $.post("data-input.php",$(".game form").serialize(),
-           function(data){ $('ul').before("<p>"+data+"</p>").prev().css('background-color','red').fadeOut(10000) },
-           'html');
-
-  });
-
 /* gives a selector with all possible names */
 function printselectplayer(i) {
    var html = "<select name=\"player"+(i-2)+"\">\n";
 <?php
- $datatmp = mysql_query("SELECT id,name FROM players ORDER BY name ASC");
- while ($temp = mysql_fetch_assoc($datatmp))
+ $datatmp = DB_query("SELECT id,name FROM players ORDER BY name ASC");
+ while ($temp = $datatmp->fetch_assoc())
   {
     echo 'html += "<option value=\''.$temp['id']."'>".$temp['name']."</option>\\n\";\n";
   }
@@ -424,119 +412,9 @@ function printselectplayer(i) {
    return html;
  }
 
-/* update numeric input names */
- function updateinput() {
-   $('input[type="number"]').each(function(i) { $(this).removeAttr("name"); });
-   $('input[type="number"]').each(function(i) { $(this).attr("name",i ); });
- }
-
-/* adds a column to a game table */
-function addCol() {
-    var currentNumberOfTDsInARow = $('.game table tr:last td').length;
-    newColNum = currentNumberOfTDsInARow;
-    var rows = $('.game tbody tr');
-    $('.game thead tr').find('th:last').html(printselectplayer(newColNum));
-    $('.game thead tr').find('th:last').after('<th><button class="newplayer">new player</button></th>');
-    for (var i = 0; i < rows.length; i++) {
-        $(rows[i]).find('td:last').before('<td><input type="text" name="game-'+i+'-'+(newColNum-2)+'"></td>');
-    }
-    $(".newplayer").click(addCol);
-    updateinput();
-}
-$(".newplayer").click(addCol);
-
-/* adds a row to a game table */
-function addRow() {
-  var currentNumberOfRows = $('.game table tr').length -1;
-  $('.game tbody tr').find('td:last').html('');
-  var row = "<tr><td><input type=\"checkbox\" name=\"ewbc"+$('.game tbody tr').length+"\" value=\"ewbc\" /></td>";
-  $('.game tbody tr:last').find('td:not(:first-child, :last-child)').each( function(index) {
-      row = row.concat("<td><input type=\"text\" name=\"game-"+currentNumberOfRows+"-"+index+"\"></td> ") } );
-  row=row.concat("<td><button class=\"newgame\">new row</button></td></tr>\n");
-
-  $('.game tbody:last').append(row);
-  $(".newgame").click(addRow);
-  updateinput();
-}
-$(".newgame").click(addRow);
-
-function tableedit() {
-    mynewbutton = '<button class="save">save</button><button class="cancel">cancel</button>';
-    myoldbutton = '<button class="edit">edit</button>';
-
-    var table = $(this).parent().parent()
-
-    var mycont= new Array();
-
-    /* remember current content */
-    table.find("td").each( function(index) { mycont[index]=$(this).html(); } );
-
-    /* replace with input elements, skip first and last */
-    table.find('td:not(:first-child, :last-child)').each( function(index) { $(this).html('<input type="text" value="'+ mycont[index+1] +'">')} )
-
-    table.find("td:last-child").html(mynewbutton);
-    $(".edit").attr("disabled", "disabled");
-
-    /* add functions to exit edit */
-    table.find("td:last-chile").find(".cancel").click(function () {
-
-    var table = $(this).parent().parent();
-
-    table.find('td:not(:first-child, :last-child)').each( function(index) { $(this).html(mycont[index+1])} );
-    $(".edit").removeAttr("disabled");
-    table.find("td:last-child").html(mycont[mycont.length-1]).find(".edit").click(tableedit);
-
-    });
-    table.find("td:last-child").find(".save").click(function () {
-
-       var table = $(this).parent().parent();
-
-       token = <?php echo '"'.$token.'"' ?> ;
-       var myclass = $(this).closest("li").attr('class');
-       var mydata = {};
-       var datanew = {};
-
-       /* update content */
-       table.find("td input").each( function(index) { datanew[index]=$(this).attr("value"); } );
-
-       var i,j=0;
-       mydata.what  = myclass;
-       mydata.token = token;
-       mydata.id    = mycont[0];
-       j=2;
-       for(i in mycont)
-	 {mydata[j]=datanew[i];j++;}
-
-       $.post("data-input.php",mydata,
-              function(data){ $('ul').before("<p>"+data+"</p>").prev().css('background-color','red').fadeOut(10000) },
-              'html');
-
-       /* reset to new values */
-       table.find('td:not(:first-child, :last-child)').each( function(index) { $(this).html(datanew[index])} );
-       $(".edit").removeAttr("disabled");
-       table.find("td:last-child").html(myoldbutton);
-
-       /* if no id, add new row */
-       var row = "<tr>";
-       table.find('td:not(:last-child)').each( function(index) { row = row.concat("<td></td> ") } );
-       row=row.concat("<td><button class=\"edit\">new</button></td></tr>");
-       if(mycont[0].length===0)
-	 {
-	   table.closest('table').find('tbody:last').append(row);
-	 }
-       $(".edit").click(tableedit);
-
-    });
-
-}
-
-$(".toggle").click(function ()     {   $(this).parent().find("table").toggle(); });
-$(".gametoggle").click(function () {   $(this).parent().find("form").toggle(); });
-$(".edit").click(tableedit);
-
+var token = <?php echo '"'.$token.'"' ?> ;
 
 </script>
-
 
 <?php
 output_footer();
