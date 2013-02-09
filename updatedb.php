@@ -48,7 +48,7 @@ if(isset($_SERVER['REMOTE_ADDR']))
   exit();
 
 $old_version = DB_get_version();
-$current_version = 3;
+$current_version = 4;
 
 if($old_version < $current_version)
   echo "Will upgrade your database now:\n";
