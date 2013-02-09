@@ -304,20 +304,17 @@ else
 	 echo "<table class=\"stats\">\n";
 	 echo "<thead><tr><th>ID</th><th>Name</th><th>Coordinates</th><th>created</th><th></th></tr></thead>\n";
 	 echo "<tbody>\n";
-         $datatmp = DB_query("SELECT id,create_date,name,X(coordinates), Y(coordinates) FROM locations ORDER BY name");
-	 if($datatmp)
+         $datatmp = DB_query_array_all("SELECT id,create_date,name,X(coordinates), Y(coordinates) FROM locations ORDER BY name");
+	 foreach($datatmp as $dat)
 	   {
-	     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
-	       {
-		 $id = $dat[0];
-		 $date  = $dat[1];
-		 $name  = $dat[2];
-		 $coorX  = $dat[3];
-		 $coorY  = $dat[4];
-		 echo "<tr><td>$id</td> <td>$name</td><td>$coorX $coorY</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
-	       }
-	     echo "<tr><td></td> <td></td><td></td> <td></td> <td><button class=\"edit\">new</button></td></tr>\n";
+	     $id     = $dat[0];
+	     $date   = $dat[1];
+	     $name   = $dat[2];
+	     $coorX  = $dat[3];
+	     $coorY  = $dat[4];
+	     echo "<tr><td>$id</td> <td>$name</td><td>$coorX $coorY</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
 	   }
+	 echo "<tr><td></td> <td></td><td></td> <td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	 echo "</tbody></table>\n";
 ?>
 <li class="players"> <button class="toggle">show/edit players</button>
@@ -325,18 +322,15 @@ else
 	 echo "<table class=\"stats\" >\n";
 	 echo "<thead><tr><th>ID</th><th>Name</th><th>created</th><th></th></tr></thead>\n";
 	 echo "<tbody>\n";
-         $datatmp = DB_query("SELECT * FROM players ORDER BY name");
-	 if($datatmp)
+         $datatmp = DB_query_array_all("SELECT * FROM players ORDER BY name");
+	 foreach($datatmp as $dat)
 	   {
-	     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
-	       {
-		 $id = $dat[0];
-		 $date  = $dat[1];
-		 $name  = $dat[2];
-		 echo "<tr><td>$id</td> <td>$name</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
-	       }
-	     echo "<tr><td></td> <td></td><td></td> <td><button class=\"edit\">new</button></td></tr>\n";
+	     $id = $dat[0];
+	     $date  = $dat[1];
+	     $name  = $dat[2];
+	     echo "<tr><td>$id</td> <td>$name</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
 	   }
+	 echo "<tr><td></td> <td></td><td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	 echo "</tbody></table>\n";
 ?>
 <li class="variations"> <button class="toggle">add/edit variations </button>
@@ -344,19 +338,16 @@ else
 	 echo "<table class=\"stats\" >\n";
 	 echo "<thead><tr><th>ID</th><th>Name</th><th>short</th><th>created</th><th></th></tr></thead>\n";
 	 echo "<tbody>\n";
-         $datatmp = DB_query("SELECT * FROM variations");
-	 if($datatmp)
+         $datatmp = DB_query_array_all("SELECT * FROM variations");
+	 foreach($datatmp as $dat)
 	   {
-	     while($dat= $datatmp->fetch_array(MYSQLI_NUM))
-	       {
-		 $id = $dat[0];
-		 $date  = $dat[1];
-		 $name  = $dat[2];
-		 $short  = $date[3];
-		 echo "<tr><td>$id</td> <td>$name</td> <td>$short</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
-	       }
-	     echo "<tr><td></td> <td></td> <td></td> <td></td> <td><button class=\"edit\">new</button></td></tr>\n";
+	     $id    = $dat[0];
+	     $date  = $dat[1];
+	     $name  = $dat[2];
+	     $short = $dat[3];
+	     echo "<tr><td>$id</td> <td>$name</td> <td>$short</td> <td>$date</td> <td><button class=\"edit\">edit</button></td></tr>\n";
 	   }
+	 echo "<tr><td></td> <td></td> <td></td> <td></td> <td><button class=\"edit\">new</button></td></tr>\n";
 	 echo "</tbody></table>\n";
 ?>
 <li class="game"> <button class="gametoggle">add game</button>
@@ -365,8 +356,8 @@ else
 <input type="hidden" name="what"  value="game">
 <label for="variation"> Variation:</label> <select name='variation' id='variation'>
 <?php
- $datatmp = DB_query("SELECT id,name FROM variations");
- while ($temp = $datatmp->fetch_assoc())
+ $datatmp = DB_query_array_all("SELECT id,name FROM variations",MYSQLI_ASSOC);
+ foreach ($temp = $datatmp as $temp)
   {
     echo "<option value='".$temp['id']."'>".$temp['name']."</option>\n";
   }
@@ -374,8 +365,8 @@ else
 </select><br />
 <label for="location"> Location:</label> <select name='location' id='location'>
 <?php
- $datatmp = DB_query("SELECT id,name FROM locations");
- while ($temp = $datatmp->fetch_assoc())
+ $datatmp = DB_query_array_all("SELECT id,name FROM locations",MYSQLI_ASSOC);
+ foreach($datatmp as $temp)
   {
     echo "<option value='".$temp['id']."'>".$temp['name']."</option>\n";
   }
@@ -402,8 +393,8 @@ else
 function printselectplayer(i) {
    var html = "<select name=\"player"+(i-2)+"\">\n";
 <?php
- $datatmp = DB_query("SELECT id,name FROM players ORDER BY name ASC");
- while ($temp = $datatmp->fetch_assoc())
+   $datatmp = DB_query_array_all("SELECT id,name FROM players ORDER BY name ASC",MYSQLI_ASSOC);
+ foreach($datatmp as $temp)
   {
     echo 'html += "<option value=\''.$temp['id']."'>".$temp['name']."</option>\\n\";\n";
   }
