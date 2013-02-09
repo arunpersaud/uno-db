@@ -102,9 +102,12 @@ function DB_query($query)
   return $db->query($query);
 }
 
-function DB_fetch_array($result)
+function DB_fetch_array($result,$type=MYSQLI_NUM)
 {
-  return $result->fetch_array(MYSQLI_NUM);
+  if($result)
+    return $result->fetch_array($type);
+  else
+    return NULL;
 }
 
 function DB_insert_id()
@@ -114,24 +117,24 @@ function DB_insert_id()
 }
 /* end Mysql functions */
 
-function DB_query_array($query)
+function DB_query_array($query,$type=MYSQLI_NUM)
 {
   $result = DB_query($query);
   if($result)
     {
-      $return = DB_fetch_array($result);
+      $return = DB_fetch_array($result,$type);
       return $return;
     }
 
   return NULL;
 }
 
-function DB_query_array_all($query)
+function DB_query_array_all($query,$type=MYSQLI_NUM)
 {
   $result = array();
 
   $queryresult  = DB_query($query);
-  while($row = DB_fetch_array($queryresult))
+  while($row = DB_fetch_array($queryresult,$type))
     $result[] = $row;
 
   return $result;
