@@ -1,5 +1,5 @@
 /*
- * layout.php --  this is part of a web interface for UNO-darmstadt
+ * layout.js --  this is part of a web interface for UNO-darmstadt
  *
  * Copyright 2012, 2013 Arun Persaud
  *
