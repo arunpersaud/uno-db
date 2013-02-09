@@ -249,7 +249,7 @@ foreach ($datatmp as $who)
      foreach($names as $key=>$name)
        {
 	 $data   = DB_query_array("SELECT id FROM players WHERE name=".DB_quote_smart($name));
-	 $nameid = $nameid[0];
+	 $nameid = $data[0];
 
 	 $ydata = array();
 
@@ -300,7 +300,7 @@ foreach ($datatmp as $who)
 				" WHERE ".$varstr.
 				" AND players.name=".DB_quote_smart($name));
 
-	 $wins = DB_query_arrau("SELECT count(*) ".
+	 $wins = DB_query_array("SELECT count(*) ".
 				" FROM scores ".
 				" LEFT JOIN players ON players.id=scores.player ".
 				" LEFT JOIN games ON games.id=scores.game ".
