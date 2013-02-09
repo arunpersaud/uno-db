@@ -86,7 +86,7 @@ function DB_query($query)
   /* debug/optimize the database
   $time = microtime();
   $return = $db->query($query);
-  $time = $time - microtime();
+  $time = microtime()-$time;
 
   if($time > 0.05) // this way we can find only the long ones
   {
