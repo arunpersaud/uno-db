@@ -58,17 +58,66 @@ else
 switch($old_version)
   {
   case -1:
+    /* database doesn't exist, create it */
+    DB_query("CREATE TABLE `games` (".
+	     "  `id` int(11) NOT NULL AUTO_INCREMENT,".
+	     "  `session` int(11) DEFAULT NULL,".
+	     "  `end_with_black_card` tinyint(1) DEFAULT NULL,".
+	     "  PRIMARY KEY (`id`)".
+	     ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+
+    DB_query("CREATE TABLE `locations` (".
+	     "  `id` int(11) NOT NULL AUTO_INCREMENT,".
+	     "  `create_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',".
+	     "  `name` varchar(30) DEFAULT NULL,".
+	     "  `coordinates` point DEFAULT NULL,".
+	     "  PRIMARY KEY (`id`)".
+	     ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+
+    DB_query("CREATE TABLE `players` (".
+	     "  `id` int(11) NOT NULL AUTO_INCREMENT,".
+	     "  `create_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',".
+	     "  `name` varchar(30) DEFAULT NULL,".
+	     "  PRIMARY KEY (`id`)".
+	     ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+
+    DB_query("CREATE TABLE `scores` (".
+	     "  `id` int(11) NOT NULL AUTO_INCREMENT,".
+	     "  `game` int(11) DEFAULT NULL,".
+	     "  `player` int(11) DEFAULT NULL,".
+	     "  `score` int(11) DEFAULT NULL,".
+	     "  `position` int(11) DEFAULT NULL,".
+	     "  PRIMARY KEY (`id`)".
+	     ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+
+    DB_query("CREATE TABLE `session` (".
+	     "  `id` int(11) NOT NULL AUTO_INCREMENT,".
+	     "  `date` varchar(10) DEFAULT NULL,".
+	     "  `location_id` int(11) NOT NULL,".
+	     "  `number_of_players` int(11) DEFAULT NULL,".
+	     "  `create_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',".
+	     "  `variation` int(11) NOT NULL DEFAULT '1',".
+	     "  PRIMARY KEY (`id`)".
+	     ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+
+    DB_query("CREATE TABLE `variations` (".
+	     "  `id` int(11) NOT NULL AUTO_INCREMENT,".
+	     "  `create_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',".
+	     "  `name` varchar(30) DEFAULT NULL,".
+	     "  `short` varchar(30) DEFAULT NULL,".
+	     "  PRIMARY KEY (`id`)".
+	     ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+
+    DB_query("CREATE TABLE `version` (".
+	     "  `version` int(11) NOT NULL DEFAULT '0'".
+	     ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+
     /* add version number */
-    DB_query("CREATE table version (`version` int NOT NULL default '0')");
-    DB_query("INSERT into version VALUES('1')");
+    DB_query("INSERT into version VALUES('4')");
+    DB_query("INSERT into variations VALUES(NULL,NULL,'Uno default','Uno')");
 
-    DB_query("ALTER TABLE session".
-             " ADD COLUMN  `create_date` timestamp NOT NULL default '0000-00-00 00:00:00' AFTER number_of_players");
-
-    DB_query("ALTER TABLE players".
-             " ADD COLUMN  `create_date` timestamp NOT NULL default '0000-00-00 00:00:00' AFTER id");
-
-    echo "Upgraded to version 1.\n";
+    echo "Created database\n";
+    break;
 
   case 1:
     /* add location  */
@@ -78,10 +127,10 @@ switch($old_version)
       `name` varchar(30) DEFAULT NULL,
       `coordinates` POINT DEFAULT NULL,
       PRIMARY KEY (`id`)
-    )");
+    ) ENGINE=MyISAM DEFAULT CHARSET=utf8;");
 
     /* fill location database */
-    DB_query_array_all("INSERT INTO locations select NULL,NULL,location,NULL from session group by location");
+    DB_query("INSERT INTO locations select NULL,NULL,location,NULL from session group by location");
 
     /* modify session table to use location id*/
     DB_query("CREATE TABLE session_tmp LIKE session");
@@ -104,7 +153,7 @@ switch($old_version)
       `name` varchar(30) DEFAULT NULL,
       `short` varchar(30) DEFAULT NULL,
       PRIMARY KEY (`id`)
-    )");
+    ) ENGINE=MyISAM DEFAULT CHARSET=utf8;");
 
     DB_query("INSERT into variations VALUES(NULL,NULL,'Uno default','Uno')");
 
@@ -125,7 +174,7 @@ switch($old_version)
       `create_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
       `content` TEXT,
       PRIMARY KEY (`id`)
-    )");
+    ) ENGINE=MyISAM DEFAULT CHARSET=utf8;");
 
     DB_query("UPDATE version set version=4");
     echo "Upgraded to version 4.\n";
