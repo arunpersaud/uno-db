@@ -58,17 +58,24 @@ if(myisset('token', 'what')) // and test for token
 
     switch($what){
     case 'locations':
-      $id = $_REQUEST['id'];
-      $loc = trim($_REQUEST['2']);
+      $id    = $_REQUEST['id'];
+      $loc   = trim($_REQUEST['2']);
       $coord = trim($_REQUEST['3']);
-      $time = trim($_REQUEST['4']);
+      $time  = trim($_REQUEST['4']);
+
+      if($coord!="")
+	{
+	  $coorde = explode(",",$coord);
+	  $coordA = trim($coorde[0]);
+	  $coordB = trim($coorde[1]);
+	}
 
       /* validation */
       $ok=1;
       if($id && !is_numeric($id)) $ok=-1;
       if(!preg_match('/^[a-zA-Z0-9 ,?\']*$/',$loc)) $ok=-2;
-      if(!preg_match('/^\s*$/',$coord)) $ok=-3;
-      if(!preg_match('/^\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}:\d{2}$/',$time)) $ok=-4;
+      if(! (preg_match('/^[0-9-+.]*$/',$coordA) && preg_match('/^[0-9.+-]*$/',$coordB))) $ok=-3;
+      if(! (preg_match('/^\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}:\d{2}$/',$time) || $time=="")) $ok=-4;
 
       if($ok==1)
 	{
@@ -80,20 +87,27 @@ if(myisset('token', 'what')) // and test for token
 	      $backup = "location: id:".$db_id[0]." date:".$db_id[1]." name:".$db_id[2]." X:".$db_id[3]." Y:".$db_id[4];
 	      DB_query("INSERT INTO backup VALUES (NULL, NULL, '$backup')");
 	      /* change value */
-	      DB_query("UPDATE locations SET create_date = '".DB_quote_smart($time)."' WHERE id=$id");
-	      DB_query("UPDATE locations SET name = '".DB_quote_smart($loc)."' WHERE id=$id");
+	      DB_query("UPDATE locations SET create_date = ".DB_quote_smart($time)." WHERE id=$id");
+	      DB_query("UPDATE locations SET name = ".DB_quote_smart($loc)." WHERE id=$id");
+	      if($coord!="")
+	      DB_query("UPDATE locations SET coordinates = ".
+		       "POINT(".DB_quote_smart($coordA).",".DB_quote_smart($coordB).") WHERE id=$id");
 
 	      echo "updated";
 	    }
 	  else
 	    {
 	      /* create new entry */
-	      DB_query("INSERT INTO locations VALUES (NULL, NULL, '".DB_quote_smart($loc)."',NULL)");
+	      if($coord!="")
+		DB_query("INSERT INTO locations VALUES (NULL, NULL, ".DB_quote_smart($loc).
+			 ",POINT(".DB_quote_smart($coordA).",".DB_quote_smart($coordB)."))");
+	      else
+		DB_query("INSERT INTO locations VALUES (NULL, NULL, ".DB_quote_smart($loc).",NULL)");
 	      echo "created";
 	    }
 	}
       else
-	echo "incorrect input $ok";
+	echo "incorrect input $ok, did not add new values";
 
       break;
     case 'players':
@@ -105,7 +119,7 @@ if(myisset('token', 'what')) // and test for token
       $ok=1;
       if($id && !is_numeric($id)) $ok=-1;
       if(!preg_match('/^[a-zA-Z0-9 ]*$/',$name)) $ok=-2;
-      if(!preg_match('/^\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}:\d{2}$/',$time)) $ok=-3;
+      if(! (preg_match('/^\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}:\d{2}$/',$time) || $time=="")) $ok=-3;
 
       if($ok==1)
 	{
@@ -117,15 +131,18 @@ if(myisset('token', 'what')) // and test for token
 	      $backup = "players: id:".$db_id[0]." date:".$db_id[1]." name:".$db_id[2];
 	      DB_query("INSERT INTO backup VALUES (NULL, NULL, '$backup')");
 	      /* change value */
-	      DB_query("UPDATE players SET create_date = '".DB_quote_smart($time)."' WHERE id=$id");
-	      DB_query("UPDATE players SET name = '".DB_quote_smart($name)."' WHERE id=$id");
+	      DB_query("UPDATE players SET create_date = ".DB_quote_smart($time)." WHERE id=$id");
+	      DB_query("UPDATE players SET name = ".DB_quote_smart($name)." WHERE id=$id");
 
 	      echo "updated";
 	    }
 	  else
 	    {
 	      /* create new entry */
-	      DB_query("INSERT INTO players VALUES (NULL, NULL, '".DB_quote_smart($name)."')");
+	      if($time=="")
+		DB_query("INSERT INTO players VALUES (NULL, NULL,".DB_quote_smart($name).")");
+	      else
+		DB_query("INSERT INTO players VALUES (NULL, ".DB_quote_smart($time).",".DB_quote_smart($name).")");
 	      echo "created";
 	    }
 	}
@@ -144,7 +161,7 @@ if(myisset('token', 'what')) // and test for token
       if($id && !is_numeric($id)) $ok=-1;
       if(!preg_match('/^[a-zA-Z0-9 ]*$/',$name)) $ok=-2;
       if(!preg_match('/^[a-zA-Z0-9 ]*$/',$short)) $ok=-3;
-      if(!preg_match('/^\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}:\d{2}$/',$time)) $ok=-4;
+      if(! (preg_match('/^\d{4}-\d{2}-\d{2}\s*\d{2}:\d{2}:\d{2}$/',$time)||$time=="")) $ok=-4;
 
       if($ok==1)
 	{
@@ -156,18 +173,18 @@ if(myisset('token', 'what')) // and test for token
 	      $backup = "variations: id:".$db_id[0]." date:".$db_id[1]." name:".$db_id[2]." short:".$db_id[3];
 	      DB_query("INSERT INTO backup VALUES (NULL, NULL, '$backup')");
 	      /* change value */
-	      DB_query("UPDATE variations SET create_date = '".DB_quote_smart($time)."' WHERE id=$id");
-	      DB_query("UPDATE variations SET name  = '".DB_quote_smart($name)."' WHERE id=$id");
-	      DB_query("UPDATE variations SET short = '".DB_quote_smart($short)."' WHERE id=$id");
+	      DB_query("UPDATE variations SET create_date = ".DB_quote_smart($time)." WHERE id=$id");
+	      DB_query("UPDATE variations SET name  = ".DB_quote_smart($name)." WHERE id=$id");
+	      DB_query("UPDATE variations SET short = ".DB_quote_smart($short)." WHERE id=$id");
 
 	      echo "updated";
 	    }
 	  else
 	    {
 	      /* create new entry */
-	      DB_query("INSERT INTO variations VALUES (NULL, NULL, '".
-		       DB_quote_smart($name)."','".
-		       DB_quote_smart($short)."')");
+	      DB_query("INSERT INTO variations VALUES (NULL, NULL, ".
+		       DB_quote_smart($name).",".
+		       DB_quote_smart($short).")");
 	      echo "created";
 	    }
 	}
@@ -238,10 +255,10 @@ if(myisset('token', 'what')) // and test for token
 
 	  /* create session */
 	  //echo "INSERT INTO session VALUES (NULL, $date, $location, $nplayer, NULL, $variation) <br/>";
-	  DB_query_array("INSERT INTO session VALUES (NULL, '".DB_quote_smart($date)."', '".
-			 DB_quote_smart($location)."', '".
-			 DB_quote_smart($nplayer)."', NULL, '".
-			 DB_quote_smart($variation)."')");
+	  DB_query("INSERT INTO session VALUES (NULL, ".DB_quote_smart($date).", ".
+		   DB_quote_smart($location).", ".
+		   DB_quote_smart($nplayer).", NULL, ".
+		   DB_quote_smart($variation).")");
 	  $session_id = DB_insert_id();
 
 	  /* keep track of score, since we need to calculate the differences for each single score */
@@ -253,9 +270,9 @@ if(myisset('token', 'what')) // and test for token
 	    {
 	      /* create game id */
 	      //echo "INSERT INTO games VALUES (NULL, $session_id, ".$ewbc[$i]." ) <br />";
-	      DB_query_array("INSERT INTO games VALUES (NULL, '".
-			     DB_quote_smart($session_id)."', '".
-			     DB_quote_smart($ewbc[$i])."' )");
+	      DB_query("INSERT INTO games VALUES (NULL, ".
+		       DB_quote_smart($session_id).", ".
+		       DB_quote_smart($ewbc[$i])." )");
 	      $game_id = DB_insert_id();
 
 	      for($j=0; $j<$nplayer; $j++)
@@ -267,9 +284,9 @@ if(myisset('token', 'what')) // and test for token
 		  else
 		    $score = $score - $oldscore[$j];
 
-		  DB_query_array("INSERT INTO scores VALUES (NULL, '$game_id', '".
-				 DB_quote_smart($players[$j])."','".
-				 DB_quote_smart($score)."', '$j' )");
+		  DB_query("INSERT INTO scores VALUES (NULL, $game_id, ".
+			   DB_quote_smart($players[$j]).",".
+			   DB_quote_smart($score).", $j )");
 		  //echo " game $i: position: $j player:".$players[$j]." score: $score <br/>";
 
 		  /* remember old score */
