@@ -705,7 +705,8 @@ foreach ($datatmp as $who)
 				       " LEFT JOIN players ON scores.player=players.id ".
 				       " LEFT JOIN session ON session.id=games.session ".
 				       " WHERE games.session=".DB_quote_smart($id).
-				       " AND ".$varstr);
+				       " AND ".$varstr.
+				       "ORDER BY scores.game, scores.position");
 	 foreach($datatmp as $dat)
 	   {
 	     $score  = $dat[0]; /*score*/
