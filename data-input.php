@@ -257,7 +257,7 @@ if(myisset('token', 'what')) // and test for token
 	  //echo "INSERT INTO session VALUES (NULL, $date, $location, $nplayer, NULL, $variation) <br/>";
 	  DB_query("INSERT INTO session VALUES (NULL, ".DB_quote_smart($date).", ".
 		   DB_quote_smart($location).", ".
-		   DB_quote_smart($nplayer).", NULL, ".
+		   DB_quote_smart($nplayer).", CURRENT_TIMESTAMP, ".
 		   DB_quote_smart($variation).")");
 	  $session_id = DB_insert_id();
 
