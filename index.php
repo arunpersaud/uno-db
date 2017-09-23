@@ -206,7 +206,7 @@ if(isset($_REQUEST["allplayers"]))
 <p>
 You can also try out the following: click on one of the names,
 go to the url and change the 'name=X' part into 'name=X:Y:Z:... ',
-e.g. http://ebit....index.php?name=Frances:Theresa
+e.g. https://uno....index.php?name=Frances:Theresa
 </p>
 <ul>
 <?php
