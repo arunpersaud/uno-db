@@ -140,7 +140,7 @@ if(myisset('token', 'what')) // and test for token
 	    {
 	      /* create new entry */
 	      if($time=="")
-		DB_query("INSERT INTO players VALUES (NULL, NULL,".DB_quote_smart($name).")");
+		DB_query("INSERT INTO players VALUES (NULL, CURRENT_TIMESTAMP, ".DB_quote_smart($name).")");
 	      else
 		DB_query("INSERT INTO players VALUES (NULL, ".DB_quote_smart($time).",".DB_quote_smart($name).")");
 	      echo "created";
