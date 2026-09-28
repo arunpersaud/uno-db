@@ -38,7 +38,7 @@ error_reporting(E_ALL);
 output_header();
 
 /* open database - always needed */
-$return = DB_open($DB_HOST,$DB_USER,$DB_PASSWD,$DB_DB);
+$return = DB_open($DB_FILE);
 
 if($return)
   {
@@ -260,7 +260,7 @@ foreach ($datatmp as $who)
 					" LEFT JOIN games ON games.id=scores.game ".
 					" LEFT JOIN session ON session.id=games.session ".
 					" WHERE ".$varstr.
-					" group by scores.game ORDER BY session.date DESC");
+					" group by scores.game ORDER BY session.date DESC, scores.game DESC");
 	 foreach($datatmp as $dat)
 	   $ydata[]=$dat[0];
 	 $ydata[]=0;
@@ -587,8 +587,9 @@ foreach ($datatmp as $who)
 		 $sum=0;
 
 		 /* add up the points*/
-		 foreach($data[$i] as $dat)
+		 foreach($data[$i] as $key => $dat)
 		   {
+		     if ($key === 'name') continue;
 		     $s = $dat;
 		     if ($s==-9999) $s=0;
 
@@ -634,10 +635,11 @@ foreach ($datatmp as $who)
 	     for($k=50; $k>0;$k-=10)
 	       {
 		 $s  = $datout[$k][$i]['sum'];
-		 $a  = round($datout[$k][$i]['avg'],2);
-
 		 if ($datout[$k][$i]['num']>0)
-		   $output.="<td>$a ($s)</td>";
+		   {
+		     $a  = round($datout[$k][$i]['avg'],2);
+		     $output.="<td>$a ($s)</td>";
+		   }
 		 else
 		   $output.="<td>-</td> ";
 	       }
@@ -791,7 +793,7 @@ foreach ($datatmp as $who)
 				 "FROM session ".
 				 "LEFT JOIN locations ON location_id=locations.id ".
 				 "WHERE session.id='$low_sessionid'");
-	 while($tdat = $locationtmp->fetch_array(MYSQLI_NUM))
+	 while($tdat = DB_fetch_array($locationtmp,MYSQLI_NUM))
 	   {
 	     $low_date     = $tdat[0];
 	     $low_location = $tdat[1];

@@ -33,21 +33,55 @@
 
 /**************************************************
  *
- * DB - functions -- mysql backend
+ * DB - functions -- sqlite backend
+ *
+ * Queries were written for MySQL. The MySQL-only SQL functions they use
+ * (IF, POINT, X, Y) are provided as user functions, so the queries can
+ * stay as they are.
  *
  **************************************************/
 
-function DB_open($DB_HOST,$DB_USER,$DB_PASSWD,$DB_DB)
+/* keep the old mysqli fetch-mode names working for callers */
+if (!defined('MYSQLI_NUM'))
+  {
+    define('MYSQLI_NUM',   PDO::FETCH_NUM);
+    define('MYSQLI_ASSOC', PDO::FETCH_ASSOC);
+  }
+
+function DB_open($DB_FILE)
 {
   $version_needed = 4;
 
   global $db;
-  $db = new mysqli($DB_HOST,$DB_USER, $DB_PASSWD, $DB_DB);
-  if ( $db->connect_errno )
+  try
     {
-      echo "Failed to connect to Mysql ".$db->connect_error." (".$db->connect_errno.")\n";
+      $db = new Pdo\Sqlite('sqlite:'.$DB_FILE);
+    }
+  catch (PDOException $e)
+    {
+      echo "Failed to open database: ".htmlspecialchars($e->getMessage())."\n";
       return -1;
-    };
+    }
+  $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
+  $db->exec('PRAGMA busy_timeout = 5000');
+
+  $db->createFunction('IF', fn($cond, $a, $b) => $cond ? $a : $b, 3, PDO::SQLITE_DETERMINISTIC);
+  /* MySQL STD(): population standard deviation (Welford's algorithm) */
+  $db->createAggregate('STD',
+    function ($ctx, $row, $x) {
+      $ctx ??= [0, 0.0, 0.0];            /* n, mean, M2 */
+      if ($x === null) return $ctx;
+      $n = $ctx[0] + 1;
+      $d = $x - $ctx[1];
+      $mean = $ctx[1] + $d / $n;
+      return [$n, $mean, $ctx[2] + $d * ($x - $mean)];
+    },
+    fn($ctx, $rows) => ($ctx === null || $ctx[0] == 0) ? null : sqrt($ctx[2] / $ctx[0]),
+    1);
+  /* coordinates are stored as text "x y" */
+  $db->createFunction('POINT', fn($x, $y) => "$x $y", 2, PDO::SQLITE_DETERMINISTIC);
+  $db->createFunction('X', fn($p) => $p === null ? null : (float) explode(' ', $p)[0], 1, PDO::SQLITE_DETERMINISTIC);
+  $db->createFunction('Y', fn($p) => $p === null ? null : (float) explode(' ', $p)[1], 1, PDO::SQLITE_DETERMINISTIC);
 
   /* check database version */
   $version = DB_get_version();
@@ -61,51 +95,35 @@ function DB_open($DB_HOST,$DB_USER,$DB_PASSWD,$DB_DB)
 function DB_close()
 {
   global $db;
-  $db->close();
+  $db = null;
   return;
 }
 
 function DB_quote_smart($value)
 {
     global $db;
-    /* Stripslashes */
-    if (get_magic_quotes_gpc()) {
-        $value = stripslashes($value);
-    }
     /* Quote if not a number or a numeric string */
-    if (!is_numeric($value)) {
-        $value = "'" . $db->real_escape_string($value) . "'";
-	$value = addcslashes($value, '%_');
-    }
+    if (!is_numeric($value))
+      $value = $db->quote($value);
     return $value;
 }
 
 function DB_query($query)
 {
   global $db;
-  /* debug/optimize the database
-  $time = microtime();
-  $return = $db->query($query);
-  $time = microtime()-$time;
-
-  if($time > 0.05) // this way we can find only the long ones
-  {
-    $logfile=fopen('/tmp/DBlog.log','a+');
-    fwrite($logfile,"EXPLAIN $query ;\n");
-    fwrite($logfile,"time of above query: $time\n");
-    fclose($logfile);
-  };
-
-  return $return;
-  */
-
-  return $db->query($query);
+  $result = $db->query($query);
+  if ($result === false)
+    error_log('DB error: '.$db->errorInfo()[2].' in query: '.$query);
+  return $result;
 }
 
 function DB_fetch_array($result,$type=MYSQLI_NUM)
 {
   if($result)
-    return $result->fetch_array($type);
+    {
+      $row = $result->fetch($type);
+      return $row === false ? NULL : $row;
+    }
   else
     return NULL;
 }
@@ -113,9 +131,9 @@ function DB_fetch_array($result,$type=MYSQLI_NUM)
 function DB_insert_id()
 {
   global $db;
-  return $db->insert_id;
+  return $db->lastInsertId();
 }
-/* end Mysql functions */
+/* end DB functions */
 
 function DB_query_array($query,$type=MYSQLI_NUM)
 {
@@ -152,7 +170,7 @@ function DB_get_version()
 
 function config_check()
 {
-  global $DB_HOST, $DB_USER, $DB_PASSWD, $DB_DB, $DB_work;
+  global $DB_FILE, $DB_work;
 
   /* check if some variables are set in the config file, else set defaults */
   if(!isset($DB_work))

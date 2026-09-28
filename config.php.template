@@ -33,10 +33,9 @@
 
 /* set the information for the database */
 
-$DB_HOST   = 'please fill in';
-$DB_USER   = 'please fill in';
-$DB_PASSWD = 'please fill in';
-$DB_DB     = 'please fill in';
+/* path to the SQLite database file (create it with tools/mysql2sqlite.py
+ * or: sqlite3 uno.sqlite < schema-sqlite.sql) */
+$DB_FILE   = getenv('UNO_DB_FILE') ?: '/data/uno.sqlite';
 
 /* set this when working on the database to prevent access*/
 $DB_work   = 0;

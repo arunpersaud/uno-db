@@ -36,12 +36,8 @@ include('include/functions.php');
 /*
  * open database
  */
-$db = new mysqli($DB_HOST,$DB_USER, $DB_PASSWD, $DB_DB);
-if ( $db->connect_errno )
-  {
-    echo "Failed to connect to Mysql ".$DB->connect_error." (".$DB->connect_errno.")\n";
-    die("Couldn't connect to database");
-  };
+if(DB_open($DB_FILE))
+  die("Couldn't open database");
 
 /* generate token */
 
