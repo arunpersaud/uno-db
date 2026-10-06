@@ -62,14 +62,14 @@ if($return)
 $options="";
 
 if(isset($_REQUEST["mingames"]))
-  $mingames=$_REQUEST["mingames"];
+  $mingames=(int)$_REQUEST["mingames"];
 else
   $mingames=0;
 
 $options.="mingames=$mingames";
 
 if(isset($_REQUEST["groupsize"]))
-  $groupsize=$_REQUEST["groupsize"];
+  $groupsize=(int)$_REQUEST["groupsize"];
 else
   $groupsize=0;
 
@@ -151,9 +151,9 @@ echo "
 
  echo "<form action=\"index.php" ;
 if(isset($_REQUEST["total"]))
-  echo "?total=".$_REQUEST["total"]."";
+  echo "?total=".urlencode($_REQUEST["total"])."";
 else if(isset($_REQUEST["games"]))
-  echo "?games=".$_REQUEST["games"]."";
+  echo "?games=".urlencode($_REQUEST["games"])."";
 else if(isset($_REQUEST["lowest"]))
    echo "?lowest=1";
 else if(isset($_REQUEST["highest"]))
@@ -237,7 +237,7 @@ foreach ($datatmp as $who)
      $namestring = $_REQUEST["name"];
      $names = explode(":",$namestring);
      echo "<div class=\"person\">\n";
-     echo "<h3>$namestring</h3>\n\n";
+     echo "<h3>".htmlspecialchars($namestring)."</h3>\n\n";
 
 
      /* distribution of points */
@@ -308,7 +308,7 @@ foreach ($datatmp as $who)
 				" WHERE players.name=".DB_quote_smart($name).
 				" AND scores.score='-9999' AND ".$varstr);
 
-	 echo "<tr><td>$name</td><td>".$data[0]."</td>\n";
+	 echo "<tr><td>".htmlspecialchars($name)."</td><td>".$data[0]."</td>\n";
 	 if(sizeof($names)==2)
 	   if($name==$names[0])
 	     $av1=$data[1];
@@ -328,7 +328,7 @@ foreach ($datatmp as $who)
      foreach($names as $name)
        {
 	 echo "<div class=\"games\">\n ";
-	 if(sizeof($names)>1) echo "<h4> $name </h4>\n";
+	 if(sizeof($names)>1) echo "<h4> ".htmlspecialchars($name)." </h4>\n";
 	 echo "<table class='stats'>\n";
 	 echo "<thead><tr><th>Groupsize</th><th>Points</th><th>Average</th><th>Sigma</th><th>Number of Games </th><th>Wins</th></tr></thead>\n";
 	 echo "<tbody>";
