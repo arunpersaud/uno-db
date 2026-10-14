@@ -1,0 +1,11 @@
+/* TEAM */
+Statistics, code: Arun Persaud
+Contact: arun@nubati.net
+From: Berkeley, California
+
+/* THANKS */
+Everyone who played and kept score since 2003.
+
+/* SITE */
+Software: Python, Flask, Jinja, SQLite, htmx, uPlot, Pico CSS, openskill
+Code: https://github.com/arunpersaud/uno-db

@@ -1,0 +1,12 @@
+# The UNO database (uno.nubati.net)
+User-agent: *
+Allow: /
+# login and score entry
+Disallow: /admin/
+# endless combinations of players, sort orders and filters
+Disallow: /compare/
+Disallow: /*?
+# chart data and downloads (except the full download below)
+Disallow: /*.json
+Disallow: /*.csv
+Allow: /scores.csv

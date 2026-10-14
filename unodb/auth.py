@@ -8,6 +8,9 @@ with that passkey from then on. Logged in users can add more passkeys
 Roles: admin (everything), editor (edit any session), contributor (enter
 sessions, edit only their own).
 
+Passkeys must verify the user (fingerprint, face or device PIN), so a
+device alone isn't enough to log in.
+
 Every POST needs the CSRF token of the session (form field "csrf" or
 header X-CSRF-Token) and, if the browser sends one, an Origin header that
 matches ORIGIN.
@@ -258,7 +261,7 @@ def register_options():
         user_name=user["name"],
         authenticator_selection=AuthenticatorSelectionCriteria(
             resident_key=ResidentKeyRequirement.REQUIRED,
-            user_verification=UserVerificationRequirement.PREFERRED,
+            user_verification=UserVerificationRequirement.REQUIRED,
         ),
         exclude_credentials=[
             PublicKeyCredentialDescriptor(id=c["id"]) for c in existing
@@ -296,6 +299,7 @@ def register_verify():
             expected_challenge=webauthn.base64url_to_bytes(state["challenge"]),
             expected_rp_id=rp_id(),
             expected_origin=origin(),
+            require_user_verification=True,
         )
     except InvalidRegistrationResponse as error:
         return jsonify(error=f"The passkey could not be verified: {error}"), 400
@@ -333,7 +337,7 @@ def register_verify():
 def login_options():
     # discoverable credentials: the browser offers the passkeys it has
     options = webauthn.generate_authentication_options(
-        rp_id=rp_id(), user_verification=UserVerificationRequirement.PREFERRED
+        rp_id=rp_id(), user_verification=UserVerificationRequirement.REQUIRED
     )
     session["authentication"] = bytes_to_base64url(options.challenge)
     return current_app.response_class(
@@ -366,6 +370,7 @@ def login_verify():
             expected_origin=origin(),
             credential_public_key=row["public_key"],
             credential_current_sign_count=row["sign_count"],
+            require_user_verification=True,
         )
     except InvalidAuthenticationResponse as error:
         return jsonify(error=f"The passkey could not be verified: {error}"), 400

@@ -4,8 +4,12 @@
 {% block content %}
 <hgroup>
   <h1>{{ name }}</h1>
+  {% if summary.games %}
   <p>{{ summary.games }} games in {{ summary.sessions }} sessions,
     {{ summary.first }} to {{ summary.last }}</p>
+  {% else %}
+  <p>No games with the selected game types.</p>
+  {% endif %}
 </hgroup>
 
 <div class="grid stats">

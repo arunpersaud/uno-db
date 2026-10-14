@@ -60,8 +60,11 @@ def create_app(test_config: dict | None = None) -> Flask:
                 raise RuntimeError(f"FLASK_{key} is not set")
             app.config[key] = value
     app.config["RP_ID"] = urlsplit(app.config["ORIGIN"]).hostname
+    https = app.config["ORIGIN"].startswith("https://")
     app.config.update(
-        SESSION_COOKIE_SECURE=app.config["ORIGIN"].startswith("https://"),
+        # forms and passkey data are small; refuse anything bigger
+        MAX_CONTENT_LENGTH=64 * 1024,
+        SESSION_COOKIE_SECURE=https,
         SESSION_COOKIE_SAMESITE="Lax",
         PERMANENT_SESSION_LIFETIME=timedelta(days=30),
     )
@@ -87,6 +90,11 @@ def create_app(test_config: dict | None = None) -> Flask:
     @app.after_request
     def set_headers(response):
         response.headers.update(SECURITY_HEADERS)
+        if https:
+            # browsers use only https for this host (and its subdomains)
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
         if request.endpoint == "static":
             response.cache_control.public = True
             if "v" in request.args:

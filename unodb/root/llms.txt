@@ -1,0 +1,26 @@
+# The UNO database
+
+> Statistics of UNO games played by a group of friends since 2003 (about
+> 1200 games, 130 players): scores per game, player statistics, comparisons
+> and skill ratings. Points are the cards left in a player's hand at the
+> end of a game; the winner gets 0, fewer points is better.
+
+House rules differ between game types; see the rules pages before
+interpreting points (e.g. in "Uno default" the scores are doubled when a
+game ends with a black card).
+
+## Pages
+
+- [Home](https://uno.nubati.net/): overview, active players, recent sessions
+- [Players](https://uno.nubati.net/players): games, wins, wins vs. chance, points per game
+- [Sessions](https://uno.nubati.net/sessions): all sessions with records
+- [Ratings](https://uno.nubati.net/ratings): openskill ratings and how much is skill
+- [Game types](https://uno.nubati.net/variants): house rules
+
+## Data
+
+- [All scores as CSV](https://uno.nubati.net/scores.csv): one row per player and game (date, location, game type, session, game, player, seat, points, won, black card)
+
+## Optional
+
+- [Source code](https://github.com/arunpersaud/uno-db)

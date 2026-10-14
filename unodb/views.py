@@ -1,14 +1,19 @@
 """Public, read-only pages."""
 
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
 from flask import (
     Blueprint,
     abort,
+    current_app,
     g,
     jsonify,
     make_response,
     redirect,
     render_template,
     request,
+    send_from_directory,
     url_for,
 )
 
@@ -21,7 +26,14 @@ stats = Blueprint("stats", __name__)
 stats.before_request(read_only)
 
 # pages without the game type filter
-UNFILTERED = {"stats.contribute", "stats.variants", "stats.variant"}
+UNFILTERED = {
+    "stats.contribute",
+    "stats.variants",
+    "stats.variant",
+    "stats.root_file",
+    "stats.favicon",
+    "stats.security_txt",
+}
 
 
 @stats.before_request
@@ -124,6 +136,39 @@ def index():
         overview=st.overview(rows),
         records=st.records(session_list, st.games(rows)),
     )
+
+
+# --- files at the root of the site ----------------------------------------------
+
+ROOT_FILES = Path(__file__).parent / "root"
+
+
+@stats.route("/<any(robots.txt, humans.txt, llms.txt):name>")
+def root_file(name):
+    return send_from_directory(ROOT_FILES, name, mimetype="text/plain", max_age=86400)
+
+
+@stats.route("/favicon.ico")
+def favicon():
+    return send_from_directory(
+        Path(__file__).parent / "static",
+        "draw4.png",
+        mimetype="image/png",
+        max_age=86400,
+    )
+
+
+@stats.route("/.well-known/security.txt")
+def security_txt():
+    """RFC 9116; Expires must be at most a year ahead, so it's computed."""
+    expires = datetime.now(UTC) + timedelta(days=365)
+    text = (
+        "Contact: mailto:arun@nubati.net\n"
+        f"Expires: {expires:%Y-%m-%dT00:00:00Z}\n"
+        "Preferred-Languages: en, de\n"
+        f"Canonical: {current_app.config['ORIGIN']}/.well-known/security.txt\n"
+    )
+    return current_app.response_class(text, mimetype="text/plain")
 
 
 @stats.route("/variants")
@@ -259,7 +304,11 @@ def player(name):
     row, response = find_player(name)
     if response:
         return response
-    data = st.player(st.all_scores(" AND scores.player = ?", (row["id"],)))
+    rows = st.all_scores(" AND scores.player = ?", (row["id"],))
+    if not rows and not g.variants:
+        # no games (left): e.g. all their sessions were deleted
+        abort(404)
+    data = st.player(rows)
     sort = st.Sort(SESSION_COLUMNS | {"wins": True}, "date")
     rated = ratings.table(ratings.cached(st.all_scores(), "winner"), RATING_MIN_GAMES)
     rating = next(

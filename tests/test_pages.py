@@ -336,3 +336,59 @@ def test_csv_formula_injection():
     assert cell("-2+3") == "'-2+3"
     assert cell("Joe") == "Joe"
     assert cell(-5) == -5
+
+
+@pytest.mark.parametrize(
+    ("url", "text"),
+    [
+        ("/robots.txt", "Disallow: /admin/"),
+        ("/humans.txt", "Arun Persaud"),
+        ("/llms.txt", "# The UNO database"),
+        ("/.well-known/security.txt", "Contact: mailto:arun@nubati.net"),
+    ],
+)
+def test_root_files(client, url, text):
+    response = client.get(url)
+    assert response.status_code == 200
+    assert response.mimetype == "text/plain"
+    assert text in response.text
+
+
+def test_security_txt_expires_within_a_year(client):
+    from datetime import UTC, datetime
+
+    expires = re.search(
+        r"Expires: (\S+)", client.get("/.well-known/security.txt").text
+    )[1]
+    days = (datetime.fromisoformat(expires) - datetime.now(UTC)).days
+    assert 300 < days <= 365
+
+
+def test_favicon(client):
+    response = client.get("/favicon.ico")
+    assert response.status_code == 200
+    assert response.mimetype == "image/png"
+
+
+def test_request_size_limit(client):
+    assert client.post("/admin/login/options", data="x" * 100_000).status_code == 413
+
+
+def test_player_without_games_is_gone(app, client):
+    from unodb.db import get_db
+
+    with app.app_context():
+        get_db().execute("UPDATE session SET deleted = 'now'")
+    assert client.get("/player/ann").status_code == 404
+
+
+def test_hsts_only_with_https(database):
+    from unodb import create_app
+
+    https = create_app(
+        {"TESTING": True, "DATABASE": database, "ORIGIN": "https://x.org"}
+    )
+    header = https.test_client().get("/").headers["Strict-Transport-Security"]
+    assert header == "max-age=31536000; includeSubDomains"
+    http = create_app({"TESTING": True, "DATABASE": database})
+    assert "Strict-Transport-Security" not in http.test_client().get("/").headers
