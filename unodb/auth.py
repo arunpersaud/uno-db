@@ -163,7 +163,15 @@ def start():
     return render_template(
         "admin/start.html",
         passkeys=[dict(p, key=bytes_to_base64url(p["id"])) for p in passkeys],
-        variants=query("SELECT id, name FROM variations ORDER BY id"),
+        variants=query(
+            """SELECT variations.id, variations.name, variations.short,
+                      variations.created_by, variations.description,
+                      users.name AS author,
+                      (SELECT count(*) FROM session WHERE session.deleted IS NULL
+                         AND session.variation = variations.id) AS sessions
+               FROM variations LEFT JOIN users ON users.id = variations.created_by
+               ORDER BY sessions DESC, variations.name"""
+        ),
         rename=request.args.get("rename"),
     )
 

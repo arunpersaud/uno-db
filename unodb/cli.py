@@ -115,6 +115,39 @@ def claim_sessions(name):
     click.echo(f"{count} sessions now belong to {name}")
 
 
+@uno.command("assign-game-type")
+@click.argument("short")
+@click.argument("name")
+def assign_game_type(short, name):
+    """Make NAME the owner of the game type SHORT (they may then edit it).
+
+    SHORT is the short name in the address of the rules page
+    (/variant/SHORT); flask uno game-types lists them.
+    """
+    user = find_user(name)
+    row = query_one("SELECT * FROM variations WHERE short = ? COLLATE NOCASE", (short,))
+    if row is None:
+        raise click.ClickException(
+            f"no game type {short!r} (see: flask uno game-types)"
+        )
+    get_db().execute(
+        "UPDATE variations SET created_by = ? WHERE id = ?", (user["id"], row["id"])
+    )
+    audit("game type assigned", game_type=row["short"], user=name)
+    click.echo(f"{row['name']} ({row['short']}) now belongs to {name}")
+
+
+@uno.command("game-types")
+def game_types():
+    """List the game types with their owners."""
+    for v in query(
+        """SELECT variations.*, users.name AS owner FROM variations
+           LEFT JOIN users ON users.id = variations.created_by ORDER BY variations.id"""
+    ):
+        rules = "rules written" if v["description"] else "no rules yet"
+        click.echo(f"{v['short']:12} {v['name']:30} {v['owner'] or '–':20} {rules}")
+
+
 @uno.command("remove-user")
 @click.argument("name")
 @click.option(

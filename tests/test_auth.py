@@ -287,3 +287,29 @@ def test_rename_passkey(app, client):
         "/admin/passkeys/AQ/rename", data={"csrf": "test-token", "name": "x"}
     )
     assert response.status_code == 404
+
+
+def test_assign_game_type(app):
+    invite(app, "Joe Miller", "contributor")
+    result = cli(app, "assign-game-type", "uno", "Joe Miller")
+    assert "Uno default (Uno) now belongs to Joe Miller" in result.output
+    assert re.search(
+        r"Uno\s+Uno default\s+Joe Miller\s+no rules yet", cli(app, "game-types").output
+    )
+    assert cli(app, "assign-game-type", "nope", "Joe Miller").exit_code != 0
+
+
+def test_start_page_game_types(app, client):
+    invite(app, "Joe Miller", "contributor")
+    cli(app, "assign-game-type", "Bruno", "Joe Miller")
+    log_in(client, user_id(app, "Joe Miller"))
+    html = client.get("/admin/").text
+    assert "You can edit the game types you created" in html
+    assert html.count("Edit ✎") == 1  # only Black Rock Uno is theirs
+    assert 'href="/admin/variants/2"' in html
+
+    invite(app, "Arun")
+    log_in(client, user_id(app, "Arun"))
+    html = client.get("/admin/").text
+    assert "As admin you can edit all" in html
+    assert html.count("Edit ✎") == 2

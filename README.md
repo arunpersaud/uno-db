@@ -97,6 +97,8 @@ in its environment), e.g.
 | `users` | lists users with role, passkeys, sessions |
 | `set-role NAME ROLE` | changes a role |
 | `claim-sessions NAME` | gives NAME all sessions without an owner (data from before logins existed) |
+| `game-types` | lists the game types with their owners |
+| `assign-game-type SHORT NAME` | makes NAME the owner of a game type (they may edit its rules) |
 | `remove-user NAME [--delete-sessions]` | removes the login (passkeys, open invites); with the flag also deletes all sessions NAME entered |
 | `delete-sessions NAME` | deletes all sessions NAME entered |
 | `restore-sessions NAME` | brings them back |

@@ -41,9 +41,31 @@
       <button type="submit" class="secondary">Save</button>
     </fieldset>
   </label>
-  <small><a href="{{ url_for('stats.variants') }}">Rules of the game types</a> ·
-    <a href="{{ url_for('admin.variant_form') }}">create a new game type</a></small>
 </form>
+
+<h2>Game types</h2>
+<p>Each game type has its rules written down, so everyone knows what the
+  scores mean. {% if current_user.role == "admin" %}As admin you can edit all
+  of them.{% else %}You can edit the game types you created.{% endif %}
+  If your house rules differ from all of these, create a new one.</p>
+<div class="overflow-auto">
+<table class="striped">
+  <thead><tr><th>Game type</th><th>Sessions</th><th>Rules by</th><th></th></tr></thead>
+  <tbody>
+    {% for v in variants %}
+    <tr>
+      <td><a href="{{ url_for('stats.variant', short=v.short) }}">{{ v.name }}</a>
+        {% if not v.description %}<small>(no rules yet)</small>{% endif %}</td>
+      <td>{{ v.sessions }}</td>
+      <td>{{ v.author or "–" }}</td>
+      <td>{% if current_user.role == "admin" or v.created_by == current_user.id %}
+        <a href="{{ url_for('admin.variant_form', variant_id=v.id) }}">Edit ✎</a>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<p><a href="{{ url_for('admin.variant_form') }}" role="button" class="secondary">Create a new game type</a></p>
 
 <h2>Your passkeys</h2>
 <div class="overflow-auto">
