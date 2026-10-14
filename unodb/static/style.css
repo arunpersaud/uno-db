@@ -347,3 +347,11 @@ a.pen {
   text-decoration: none;
   margin-left: 0.3rem;
 }
+
+.variant-filter {
+  margin-bottom: var(--pico-spacing);
+}
+
+.variant-filter label {
+  display: block;
+}

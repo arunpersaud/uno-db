@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from itertools import pairwise
 from statistics import StatisticsError, correlation, fmean, pstdev
 
-from flask import request, url_for
+from flask import g, request, url_for
 
 from .db import WINNER, query
 
@@ -58,7 +58,13 @@ def summarize(scores: list[int]) -> dict:
 
 
 def all_scores(where: str = "", params: tuple | dict = ()) -> list:
-    """Scores of all sessions that aren't deleted; where: " AND ..." """
+    """Scores of all sessions that aren't deleted; where: " AND ..."
+
+    Only the game types picked in the filter (g.variants, see views.py).
+    """
+    ids = [int(v["id"]) for v in g.get("variants") or []]
+    if ids:
+        where = f" AND session.variation IN ({', '.join(map(str, ids))})" + where
     return query(SCORES_SQL + where + CHRONOLOGICAL, params)
 
 
@@ -331,20 +337,20 @@ def compare(players: list[tuple[str, list]]) -> dict:
     result["head_to_head"] = {
         "a": name_a,
         "b": name_b,
-        "a_ahead": sum(ahead(a[g]["score"], b[g]["score"]) for g in shared),
-        "b_ahead": sum(ahead(b[g]["score"], a[g]["score"]) for g in shared),
-        "a_wins": sum(a[g]["score"] == WINNER for g in shared),
-        "b_wins": sum(b[g]["score"] == WINNER for g in shared),
+        "a_ahead": sum(ahead(a[game]["score"], b[game]["score"]) for game in shared),
+        "b_ahead": sum(ahead(b[game]["score"], a[game]["score"]) for game in shared),
+        "a_wins": sum(a[game]["score"] == WINNER for game in shared),
+        "b_wins": sum(b[game]["score"] == WINNER for game in shared),
     }
 
     # the old site's "anti-rumor": does it matter how far apart they sit?
     # distance = seats from a to b in seating order
     by_distance = defaultdict(lambda: ([], []))
-    for g in shared:
-        size = a[g]["number_of_players"]
-        distance = (b[g]["position"] - a[g]["position"]) % size
-        by_distance[distance][0].append(a[g]["score"])
-        by_distance[distance][1].append(b[g]["score"])
+    for game in shared:
+        size = a[game]["number_of_players"]
+        distance = (b[game]["position"] - a[game]["position"]) % size
+        by_distance[distance][0].append(a[game]["score"])
+        by_distance[distance][1].append(b[game]["score"])
     average_a = result["together"][0]["average"]
     average_b = result["together"][1]["average"]
     result["seating"] = [
@@ -545,7 +551,9 @@ class Sort:
 
     def url(self, key: str) -> str:
         desc = not self.desc if key == self.key else self.columns[key]
-        args = request.args.to_dict() | {
+        # the game type filter is added again by views.keep_filter (all of it;
+        # to_dict() would keep only the first)
+        args = {k: v for k, v in request.args.items() if k != "variant"} | {
             "sort": key,
             "order": "desc" if desc else "asc",
         }

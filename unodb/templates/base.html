@@ -47,6 +47,7 @@
     {% for message in get_flashed_messages() %}
     <p class="flash" role="alert">{{ message }}</p>
     {% endfor %}
+    {% if g.show_filter %}{% include "_variant_filter.html" %}{% endif %}
     {% block content %}{% endblock %}
   </main>
 

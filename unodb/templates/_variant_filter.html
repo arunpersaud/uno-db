@@ -1,0 +1,17 @@
+{# game type filter at the top of the stats pages; applied on change #}
+{% set picked = g.variants|map(attribute="short")|list %}
+<details class="variant-filter" {{ "open" if picked }}>
+  <summary>Game types: {{ g.variants|map(attribute="name")|join(", ") if picked else "all" }}</summary>
+  <form method="get" action="{{ request.path }}" hx-get="{{ request.path }}" hx-trigger="change"
+        hx-target="main" hx-select="main" hx-swap="outerHTML show:none" hx-push-url="true">
+    {% for key, value in request.args.items(multi=true) if key != "variant" %}
+    <input type="hidden" name="{{ key }}" value="{{ value }}">
+    {% endfor %}
+    {% for v in g.all_variants %}
+    <label><input type="checkbox" role="switch" name="variant" value="{{ v.short }}"
+      {{ "checked" if not picked or v.short in picked }}> {{ v.name }}</label>
+    {% endfor %}
+    <small><a href="{{ url_for('stats.variants') }}">Rules of the game types</a></small>
+    <noscript><button type="submit">Apply</button></noscript>
+  </form>
+</details>

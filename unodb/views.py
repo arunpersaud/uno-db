@@ -3,6 +3,7 @@
 from flask import (
     Blueprint,
     abort,
+    g,
     jsonify,
     make_response,
     redirect,
@@ -18,6 +19,45 @@ from .db import WINNER, query, query_one, read_only
 stats = Blueprint("stats", __name__)
 # public pages never write
 stats.before_request(read_only)
+
+# query parameters of the old PHP site (index.php)
+OLD_PARAMETERS = {
+    "name",
+    "total",
+    "games",
+    "lowest",
+    "highest",
+    "allplayers",
+    "mingames",
+    "groupsize",
+}
+
+# pages without the game type filter
+UNFILTERED = {"stats.contribute", "stats.variants", "stats.variant"}
+
+
+@stats.before_request
+def variant_filter():
+    """g.variants: the game types picked with ?variant=<short> (empty: all)."""
+    g.all_variants = query("SELECT id, name, short FROM variations ORDER BY id")
+    by_short = {v["short"].lower(): v for v in g.all_variants}
+    picked = {
+        by_short[w.lower()]["id"]
+        for w in request.args.getlist("variant")
+        if w.lower() in by_short
+    }
+    g.variants = [v for v in g.all_variants if v["id"] in picked]
+    if len(g.variants) == len(g.all_variants):
+        g.variants = []
+    g.show_filter = len(g.all_variants) > 1 and request.endpoint not in UNFILTERED
+
+
+@stats.url_defaults
+def keep_filter(endpoint, values):
+    """Links between the stats pages keep the game type filter."""
+    if g.get("variants") and "variant" not in values and endpoint not in UNFILTERED:
+        values["variant"] = [v["short"] for v in g.variants]
+
 
 SESSION_COLUMNS = {
     "date": True,
@@ -66,7 +106,7 @@ def newest_first(session_list: list[dict]) -> list[dict]:
 @stats.route("/")
 def index():
     # old links like /?name=Arun: the PHP site still has those pages
-    if request.query_string:
+    if OLD_PARAMETERS & request.args.keys():
         return redirect("/index.php?" + request.query_string.decode())
     rows = st.all_scores()
     session_list = st.sessions(rows)
