@@ -347,6 +347,15 @@ wheels = [
 ]
 
 [[package]]
+name = "openskill"
+version = "6.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/fb/1ce1702a8677729cde83cb7f5924953c0704e95620898d991711a0dc57e4/openskill-6.2.0.tar.gz", hash = "sha256:817c5192aaed489697a1703fc2a3f9ea84b4487b09d0c27fd270a04f08f13d67", size = 47848, upload-time = "2026-01-11T16:49:15.249Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bf/11/2e0981f11153a06f6a6c7ae5bd84977e76c0e510af2d629288d4d5bdf81d/openskill-6.2.0-py3-none-any.whl", hash = "sha256:7c9cf8447181a5402793afe9230058ae1091ceb7fc0364b9ab3eb51e9eac1ac9", size = 48417, upload-time = "2026-01-11T16:49:14.274Z" },
+]
+
+[[package]]
 name = "packaging"
 version = "26.3"
 source = { registry = "https://pypi.org/simple" }
@@ -464,6 +473,7 @@ dependencies = [
     { name = "flask" },
     { name = "gunicorn" },
     { name = "markdown-it-py" },
+    { name = "openskill" },
     { name = "webauthn" },
 ]
 
@@ -478,6 +488,7 @@ requires-dist = [
     { name = "flask", specifier = ">=3.1" },
     { name = "gunicorn", specifier = ">=23" },
     { name = "markdown-it-py", specifier = ">=4.2.0" },
+    { name = "openskill", specifier = ">=6.2.0" },
     { name = "webauthn", specifier = ">=3.0.1" },
 ]
 

@@ -19,6 +19,11 @@
   <article><header>Longest winning streak</header>
     <p class="hero">{{ summary.streak }}</p>
     <p>games in a row</p></article>
+  {% if rating %}
+  <article><header>Rating</header>
+    <p class="hero">{{ rating.rating|number }}</p>
+    <p><a href="{{ url_for('stats.ratings_page') }}">#{{ rating.rank }} of {{ rating.of }}</a> players</p></article>
+  {% endif %}
   <article><header>Most points in one game</header>
     <p class="hero">{{ summary.highest }}</p>
     <p>{{ summary.black }} games ended with a black card</p></article>

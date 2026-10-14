@@ -12,7 +12,7 @@ from flask import (
     url_for,
 )
 
-from . import export, markdown
+from . import export, markdown, ratings
 from . import stats as st
 from .db import WINNER, query, query_one, read_only
 
@@ -261,10 +261,17 @@ def player(name):
         return response
     data = st.player(st.all_scores(" AND scores.player = ?", (row["id"],)))
     sort = st.Sort(SESSION_COLUMNS | {"wins": True}, "date")
+    rated = ratings.table(ratings.cached(st.all_scores(), "winner"), RATING_MIN_GAMES)
+    rating = next(
+        ({"rank": i + 1, "of": len(rated), **r} for i, r in enumerate(rated)
+         if r["player"] == row["id"]),
+        None,
+    )  # fmt: skip
     by_date = request.args.get("x") == "date"
     return render_template(
         "player.html",
         name=row["name"],
+        rating=rating,
         by_date=by_date,
         all_players=all_players_by_games(),
         summary=data["summary"],
@@ -381,6 +388,73 @@ def compare_charts(names):
     together = request.args.get("games") == "together"
     by_date = request.args.get("x") == "date"
     return jsonify(st.compare_charts(players, together, by_date))
+
+
+# --- ratings ---------------------------------------------------------------------
+
+RATING_MIN_GAMES = 30
+RATING_CHART_PLAYERS = 6
+
+
+def rating_mode() -> str:
+    return "points" if request.args.get("losers") == "points" else "winner"
+
+
+@stats.route("/ratings")
+def ratings_page():
+    rows = st.all_scores()
+    mode = rating_mode()
+    result = ratings.cached(rows, mode)
+    ratio = {p["name"]: p["win_ratio"] for p in st.players(rows)}
+    table = ratings.table(result, RATING_MIN_GAMES)
+    for row in table:
+        row["win_ratio"] = ratio.get(row["name"], 0.0)
+    evaluation = {m: ratings.evaluate(ratings.cached(rows, m)) for m in ratings.MODES}
+    return render_template(
+        "ratings.html",
+        table=table,
+        mode=mode,
+        evaluation=evaluation,
+        min_games=RATING_MIN_GAMES,
+        chart_players=RATING_CHART_PLAYERS,
+        beta=ratings.BETA,
+        keep={"losers": "points"} if mode == "points" else {},
+    )
+
+
+@stats.route("/ratings.json")
+def ratings_chart():
+    """Rating over time of the best rated players (date axis, as the
+    compare page)."""
+    rows = st.all_scores()
+    result = ratings.cached(rows, rating_mode())
+    top = ratings.table(result, RATING_MIN_GAMES)[:RATING_CHART_PLAYERS]
+    nr = st.day_numbers(rows)
+    values, pauses = [], []
+    for player in top:
+        v = {}
+        for date, game, rating in result.history[player["player"]]:
+            t = st.timestamp(date, nr[game])
+            if t is not None:
+                v[t] = round(rating, 2)
+        times = sorted(v)
+        pauses.append(
+            {
+                a + 1
+                for a, b in zip(times, times[1:], strict=False)
+                if b - a > st.BREAK_AFTER
+            }
+        )
+        values.append(v)
+    x = sorted(set().union(*values, *pauses))
+    index = {t: i for i, t in enumerate(x)}
+    return jsonify(
+        names=[p["name"] for p in top],
+        x=x,
+        series=[[v.get(t) for t in x] for v in values],
+        breaks=[sorted(index[t] for t in p) for p in pauses],
+        by_date=True,
+    )
 
 
 # --- CSV downloads -------------------------------------------------------------

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "_macros.html" import swatch, htmx_attrs %}
+{% block title %}Ratings – The UNO database{% endblock %}
+{% block content %}
+<h1>Ratings</h1>
+<p>A skill rating like the ones for chess or online games (<a
+  href="https://openskill.me/">openskill</a>, similar to TrueSkill). All
+  games are replayed in order; winning against strong players raises the
+  rating more than winning against weak ones, and a win at a big table
+  counts more than at a small one. The rating shown is a careful estimate
+  (μ − 3σ): it only gets high with many good games, not with a lucky
+  streak.</p>
+
+{% set url = url_for('stats.ratings_page') %}
+<form class="options" method="get" action="{{ url }}" {{ htmx_attrs(url) }} hx-trigger="change">
+  {% for key, value in request.args.items(multi=true) if key != "losers" %}
+  <input type="hidden" name="{{ key }}" value="{{ value }}">
+  {% endfor %}
+  <label><input type="checkbox" role="switch" name="losers" value="points"
+    {{ "checked" if mode == "points" }}> Rank the other players by their
+    points (off: only the win counts)</label>
+  <noscript><button type="submit">Apply</button></noscript>
+</form>
+
+<div class="overflow-auto">
+<table class="striped numbers">
+  <thead>
+    <tr><th>#</th><th class="text">Player</th><th>Rating</th><th>μ ± σ</th>
+      <th>Games</th><th>Wins vs. chance</th></tr>
+  </thead>
+  <tbody>
+    {% for p in table %}
+    <tr>
+      <td>{% if loop.index <= chart_players %}{{ swatch(loop.index) }} {% endif %}{{ loop.index }}</td>
+      <td class="text"><a href="{{ url_for('stats.player', name=p.name|slug) }}">{{ p.name }}</a></td>
+      <td><strong>{{ p.rating|number }}</strong></td>
+      <td>{{ p.mu|number }} ± {{ p.sigma|number }}</td>
+      <td>{{ p.games }}</td>
+      <td>{{ p.win_ratio|ratio }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<p><small>Players with at least {{ min_games }} games.</small></p>
+
+<section>
+  <h2>Rating over time</h2>
+  <p>The {{ chart_players }} best rated players.</p>
+  <div class="chart" id="ratings-chart"
+       data-src="{{ url_for('stats.ratings_chart', **keep) }}"></div>
+</section>
+
+<section>
+  <h2>How much is skill?</h2>
+  <p>Before each game the model gives every player a chance to win. If the
+    ratings mean something, the favorites should win more often than chance
+    (1 in N at a table of N). Counted over all games after the first
+    200:</p>
+  <div class="overflow-auto">
+  <table class="numbers">
+    <thead>
+      <tr><th class="text">Ranking of the other players</th><th>Games</th>
+        <th>Favorite won</th><th>By chance</th><th>Better than guessing</th></tr>
+    </thead>
+    <tbody>
+      {% for m, e in evaluation.items() %}
+      <tr>
+        <td class="text">{{ "by their points" if m == "points" else "only the win counts" }}</td>
+        <td>{{ e.games }}</td>
+        <td>{{ e.favorite|percent if e.games else "–" }}</td>
+        <td>{{ e.chance_favorite|percent if e.games else "–" }}</td>
+        <td>{{ "%+.2f%%"|format(100 * e.skill) if e.games else "–" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p>The favorites win somewhat more often than chance, but not by much:
+    UNO is mostly luck, and the differences between the players are small.
+    Both ways of ranking predict about equally well. ("Better than guessing"
+    compares the log loss of the predictions with guessing 1 in N; 0% would
+    be no better than chance.) The model assumes a lot of luck per game
+    (β = {{ beta|int }}); that value predicted best on these games.</p>
+</section>
+{% endblock %}

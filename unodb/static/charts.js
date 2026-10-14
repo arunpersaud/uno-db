@@ -179,6 +179,16 @@
     return result;
   }
 
+  function ratingsChart(el, data) {
+    const c = colors();
+    const lines = data.names.map((name, i) => ({
+      label: name,
+      color: c.series[i],
+      values: withBreaks(data.series[i], data.breaks[i]),
+    }));
+    return [[el, lineChart(el, c, true, null, data.x, lines)]];
+  }
+
   function clear() {
     plots.forEach(([, p]) => p.destroy());
     resizers.forEach((r) => r.disconnect());
@@ -190,7 +200,8 @@
     clear();
     const player = document.getElementById("moving-chart");
     const compare = document.getElementById("compare-chart");
-    const el = player || compare;
+    const rated = document.getElementById("ratings-chart");
+    const el = player || compare || rated;
     if (!el || typeof uPlot === "undefined") return;
 
     fetch(el.dataset.src)
@@ -198,7 +209,9 @@
       .then((data) => {
         if (!el.isConnected) return; // page changed in the meantime
         clear();
-        plots = player ? playerCharts(el, data) : compareCharts(el, data);
+        if (player) plots = playerCharts(el, data);
+        else if (compare) plots = compareCharts(el, data);
+        else plots = ratingsChart(el, data);
         const observer = new ResizeObserver(() =>
           plots.forEach(([target, p]) =>
             p.setSize({ width: target.clientWidth, height: p.height }),
