@@ -26,6 +26,7 @@ SELECT session.id AS session, session.date, session.number_of_players,
        session.created_by, locations.name AS location,
        variations.name AS variation, variations.short AS variation_short,
        games.id AS game, games.end_with_black_card AS black,
+       (SELECT count(*) FROM scores AS s2 WHERE s2.game = games.id) AS table_size,
        scores.player, players.name, scores.score, scores.position
 FROM scores
 JOIN games ON games.id = scores.game
@@ -55,6 +56,21 @@ def summarize(scores: list[int]) -> dict:
         "average": fmean(pts) if pts else 0.0,
         "sigma": pstdev(pts) if pts else 0.0,
     }
+
+
+def summarize_rows(rows) -> dict:
+    """summarize() plus wins compared to chance.
+
+    In a game with N players you'd win 1/N of the time by chance, so the
+    expected wins are the sum of 1/N; win_ratio = wins / expected wins
+    (1.2 = 20% more wins than chance). Fair across group sizes.
+    """
+    rows = list(rows)
+    result = summarize([row["score"] for row in rows])
+    expected = sum(1 / row["table_size"] for row in rows)
+    result["expected_wins"] = expected
+    result["win_ratio"] = result["wins"] / expected if expected else 0.0
+    return result
 
 
 def all_scores(where: str = "", params: tuple | dict = ()) -> list:
@@ -156,19 +172,19 @@ def players(rows) -> list[dict]:
     names = {}
     last = {}
     for row in rows:
-        by_player[row["player"]].append(row["score"])
+        by_player[row["player"]].append(row)
         names[row["player"]] = row["name"]
         last[row["player"]] = row["date"]
     return [
-        {"name": names[p], "last": last[p], **summarize(scores)}
-        for p, scores in by_player.items()
+        {"name": names[p], "last": last[p], **summarize_rows(player_rows)}
+        for p, player_rows in by_player.items()
     ]
 
 
 def player(rows) -> dict:
     """Everything on a player page; rows: this player's scores, in order."""
     scores = [row["score"] for row in rows]
-    summary = summarize(scores)
+    summary = summarize_rows(rows)
     summary["sessions"] = len({row["session"] for row in rows})
     # unknown dates like 1???-??-?? sort first: skip them
     dated = [row["date"] for row in rows if timestamp(row["date"], 0) is not None]
@@ -186,9 +202,9 @@ def player(rows) -> dict:
 
     by_size = defaultdict(list)
     for row in rows:
-        by_size[row["number_of_players"]].append(row["score"])
+        by_size[row["number_of_players"]].append(row)
     group_sizes = [
-        {"size": size, **summarize(s)} for size, s in sorted(by_size.items())
+        {"size": size, **summarize_rows(r)} for size, r in sorted(by_size.items())
     ]
 
     session_list = sessions(rows)
@@ -314,14 +330,11 @@ def compare(players: list[tuple[str, list]]) -> dict:
     shared = set.intersection(*({row["game"] for row in rows} for _, rows in players))
     result = {
         "shared": len(shared),
-        "overall": [
-            {"name": name, **summarize([row["score"] for row in rows])}
-            for name, rows in players
-        ],
+        "overall": [{"name": name, **summarize_rows(rows)} for name, rows in players],
         "together": [
             {
                 "name": name,
-                **summarize([row["score"] for row in rows if row["game"] in shared]),
+                **summarize_rows(row for row in rows if row["game"] in shared),
             }
             for name, rows in players
         ],

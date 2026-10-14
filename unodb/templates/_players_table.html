@@ -7,6 +7,7 @@
       {{ th(sort, "games", "Games") }}
       {{ th(sort, "wins", "Wins") }}
       {{ th(sort, "win_rate", "Win rate") }}
+      {{ th(sort, "win_ratio", "Wins vs. chance") }}
       {{ th(sort, "average", "Points per game") }}
       {{ th(sort, "last", "Last played") }}
     </tr>
@@ -18,6 +19,7 @@
       <td>{{ p.games }}</td>
       <td>{{ p.wins }}</td>
       <td>{{ p.win_rate|percent }}</td>
+      <td>{{ p.win_ratio|ratio }}</td>
       <td>{{ p.average|number }}</td>
       <td>{{ p.last }}</td>
     </tr>

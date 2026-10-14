@@ -32,6 +32,7 @@ def row(game, score, session=1, date="2004-01-01", players=3):
         "player": 1,
         "name": "Ann",
         "score": score,
+        "table_size": players,
     }
 
 
@@ -109,3 +110,13 @@ def test_correlations_interval():
     pair = stats.correlations([("A", rows_a), ("B", rows_b)])["pair"]
     assert 0 < pair["low"] < pair["r"] < pair["high"]
     assert pair["tint"].startswith("corr-pos-")
+
+
+def test_win_ratio():
+    # a win in a 2-player game (chance 1/2), a win and two losses in
+    # 4-player games (chance 1/4 each): 2 wins, 1/2 + 3/4 = 1.25 expected
+    rows = [row(1, WINNER, players=2), row(2, WINNER, players=4)]
+    rows += [row(3, 10, players=4), row(4, 5, players=4)]
+    s = stats.summarize_rows(rows)
+    assert s["expected_wins"] == pytest.approx(1.25)
+    assert s["win_ratio"] == pytest.approx(1.6)

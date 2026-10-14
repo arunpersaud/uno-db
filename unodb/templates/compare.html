@@ -46,13 +46,13 @@
   <thead>
     <tr>
       <th></th>
-      <th colspan="5" class="group">All their games</th>
-      <th colspan="4" class="group">The {{ data.shared }} games together</th>
+      <th colspan="6" class="group">All their games</th>
+      <th colspan="5" class="group">The {{ data.shared }} games together</th>
     </tr>
     <tr>
       <th>Player</th>
-      <th>Games</th><th>Wins</th><th>Win rate</th><th>Points per game</th><th>σ</th>
-      <th>Games</th><th>Wins</th><th>Win rate</th><th>Points per game</th>
+      <th>Games</th><th>Wins</th><th>Win rate</th><th>vs. chance</th><th>Points per game</th><th>σ</th>
+      <th>Games</th><th>Wins</th><th>Win rate</th><th>vs. chance</th><th>Points per game</th>
     </tr>
   </thead>
   <tbody>
@@ -61,8 +61,10 @@
     <tr>
       <td>{{ swatch(loop.index) }} {{ o.name }}</td>
       <td>{{ o.games }}</td><td>{{ o.wins }}</td><td>{{ o.win_rate|percent }}</td>
+      <td>{{ o.win_ratio|ratio }}</td>
       <td>{{ o.average|number }}</td><td>{{ o.sigma|number }}</td>
       <td>{{ t.games }}</td><td>{{ t.wins }}</td><td>{{ t.win_rate|percent }}</td>
+      <td>{{ t.win_ratio|ratio }}</td>
       <td>{{ t.average|number }}</td>
     </tr>
     {% endfor %}

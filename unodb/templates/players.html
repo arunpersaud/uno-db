@@ -2,6 +2,9 @@
 {% block title %}Players – The UNO database{% endblock %}
 {% block content %}
 <h1>Players</h1>
-<p>Click a column header to sort.</p>
+<p>Click a column header to sort. <strong>Wins vs. chance</strong> compares
+  the wins with what chance would give: in a game with N players you'd win
+  1 in N times. 1.20× means 20% more wins than chance, whatever the group
+  sizes were.</p>
 {% include "_players_table.html" %}
 {% endblock %}

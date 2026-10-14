@@ -73,6 +73,7 @@ PLAYER_COLUMNS = {
     "games": True,
     "wins": True,
     "win_rate": True,
+    "win_ratio": True,
     "average": True,
     "last": True,
 }
@@ -97,6 +98,12 @@ def percent(value: float) -> str:
 @stats.app_template_filter()
 def number(value: float) -> str:
     return f"{value:.1f}"
+
+
+@stats.app_template_filter()
+def ratio(value: float) -> str:
+    """Wins compared to chance: 1.23×."""
+    return f"{value:.2f}×"
 
 
 def newest_first(session_list: list[dict]) -> list[dict]:

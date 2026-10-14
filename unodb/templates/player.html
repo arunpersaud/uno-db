@@ -11,7 +11,8 @@
 <div class="grid stats">
   <article><header>Wins</header>
     <p class="hero">{{ summary.wins }}</p>
-    <p>{{ summary.win_rate|percent }} of the games</p></article>
+    <p>{{ summary.win_rate|percent }} of the games,
+      <span title="Wins compared to chance: with N players you'd win 1 in N games">{{ summary.win_ratio|ratio }} chance</span></p></article>
   <article><header>Points per game</header>
     <p class="hero">{{ summary.average|number }}</p>
     <p>σ {{ summary.sigma|number }}, {{ summary.points }} points in total</p></article>
@@ -51,7 +52,7 @@
 <table class="striped numbers">
   <thead>
     <tr><th>Players</th><th>Games</th><th>Wins</th><th>Win rate</th>
-      <th>Points per game</th><th>σ</th></tr>
+      <th>Wins vs. chance</th><th>Points per game</th><th>σ</th></tr>
   </thead>
   <tbody>
     {% for g in group_sizes %}
@@ -60,6 +61,7 @@
       <td>{{ g.games }}</td>
       <td>{{ g.wins }}</td>
       <td>{{ g.win_rate|percent }}</td>
+      <td>{{ g.win_ratio|ratio }}</td>
       <td>{{ g.average|number }}</td>
       <td>{{ g.sigma|number }}</td>
     </tr>
