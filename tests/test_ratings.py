@@ -75,3 +75,35 @@ def test_ratings_page(client, monkeypatch):
     # Ann and Bob both won 2 of their 3 games, Cy Young none
     assert re.search(r"#[12] of 3</a> players", client.get("/player/ann").text)
     assert "#3 of 3</a> players" in client.get("/player/cy-young").text
+
+
+def test_points_vs_table():
+    # 3 players, 4 games: player 1 always 0 (won), 2 always 10, 3 always 20
+    rows = []
+    for g in range(4):
+        rows += [
+            {**row(g, 1, WINNER), "black": 0},
+            {**row(g, 2, 10), "black": 0},
+            {**row(g, 3, 20), "black": 1 if g == 0 else 0},
+        ]
+    vs = ratings.points_vs_table(rows)
+    # player 1: 0 - mean(10, 20) = -15 (game 0: 0 - mean(10, 10) = -10)
+    assert vs[1]["average"] == pytest.approx((-10 - 15 * 3) / 4)
+    assert vs[2]["average"] > vs[1]["average"]
+    assert vs[3]["average"] > 0
+    assert vs[1]["ci"] > 0
+
+
+def test_ratings_sortable(client, monkeypatch):
+    from unodb import views
+
+    monkeypatch.setattr(views, "RATING_MIN_GAMES", 1)
+    html = client.get("/ratings?sort=vs_table_average").text
+    assert (
+        'aria-sort="ascending"><a href="/ratings?sort=vs_table_average&amp;order=desc"'
+        in html
+    )
+    names = re.findall(r'<a href="/player/([a-z-]+)">', html)
+    # games with 3 players (black card halved): Ann 0 vs. (12+30)/2 and
+    # 2.5 vs. (0+25)/2 -> -15.5; Bob -3 and -13.75 -> -8.4; Cy Young above
+    assert names[:3] == ["ann", "bob", "cy-young"]

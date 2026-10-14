@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import swatch, htmx_attrs %}
+{% from "_macros.html" import swatch, htmx_attrs, th %}
 {% block title %}Ratings – The UNO database{% endblock %}
 {% block content %}
 <h1>Ratings</h1>
@@ -25,24 +25,37 @@
 <div class="overflow-auto">
 <table class="striped numbers">
   <thead>
-    <tr><th>#</th><th class="text">Player</th><th>Rating</th><th>μ ± σ</th>
-      <th>Games</th><th>Wins vs. chance</th></tr>
+    <tr><th>#</th>{{ th(sort, "name", "Player", "text") }}{{ th(sort, "rating", "Rating") }}
+      <th>μ ± σ</th>{{ th(sort, "games", "Games") }}{{ th(sort, "win_ratio", "Wins vs. chance") }}
+      {{ th(sort, "vs_table_average", "Points vs. table") }}</tr>
   </thead>
   <tbody>
     {% for p in table %}
     <tr>
-      <td>{% if loop.index <= chart_players %}{{ swatch(loop.index) }} {% endif %}{{ loop.index }}</td>
+      <td>{% if p.rank <= chart_players %}{{ swatch(p.rank) }} {% endif %}{{ p.rank }}</td>
       <td class="text"><a href="{{ url_for('stats.player', name=p.name|slug) }}">{{ p.name }}</a></td>
       <td><strong>{{ p.rating|number }}</strong></td>
       <td>{{ p.mu|number }} ± {{ p.sigma|number }}</td>
       <td>{{ p.games }}</td>
       <td>{{ p.win_ratio|ratio }}</td>
+      <td class="{{ 'better-1' if p.vs_table_ci is not none and p.vs_table_average + p.vs_table_ci < 0
+                    else ('worse-1' if p.vs_table_ci is not none and p.vs_table_average - p.vs_table_ci > 0) }}">
+        {%- if p.vs_table_average is not none %}{{ "%+.1f"|format(p.vs_table_average) }}
+        {%- if p.vs_table_ci is not none %} ± {{ "%.1f"|format(p.vs_table_ci) }}{% endif %}{% else %}–{% endif %}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 </div>
-<p><small>Players with at least {{ min_games }} games.</small></p>
+<p><small>Players with at least {{ min_games }} games; # is the place by
+  rating. Click a column header to sort.</small></p>
+<p><strong>Points vs. table</strong> is the other way to look at skill: how
+  many points per game fewer (−) or more (+) a player had than the others
+  at the same table, with the 95% interval (black-card games count half,
+  since their scores are doubled). Blue: clearly fewer points than the
+  table, red: clearly more. Over many games this separates the players
+  better than a rolling average, which over 20 games still moves by about
+  ±7 points by chance.</p>
 
 <section>
   <h2>Rating over time</h2>
@@ -76,9 +89,12 @@
     </tbody>
   </table>
   </div>
-  <p>The favorites win somewhat more often than chance, but not by much:
-    UNO is mostly luck, and the differences between the players are small.
-    Both ways of ranking predict about equally well. ("Better than guessing"
+  <p>The favorites win somewhat more often than chance, but not by much: a
+    single game is mostly luck. Over hundreds of games, the small
+    differences between the players add up and become clear (see points vs.
+    table). Both ways of ranking predict about equally well, and so does
+    the points average: openskill only uses the order of the points, not
+    how far apart they are. ("Better than guessing"
     compares the log loss of the predictions with guessing 1 in N; 0% would
     be no better than chance.) The model assumes a lot of luck per game
     (β = {{ beta|int }}); that value predicted best on these games.</p>

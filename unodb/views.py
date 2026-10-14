@@ -442,6 +442,14 @@ def compare_charts(names):
 # --- ratings ---------------------------------------------------------------------
 
 RATING_MIN_GAMES = 30
+# sort key -> sorts descending by default; points vs. the table: fewer first
+RATING_COLUMNS = {
+    "rating": True,
+    "name": False,
+    "games": True,
+    "win_ratio": True,
+    "vs_table_average": False,
+}
 RATING_CHART_PLAYERS = 6
 
 
@@ -455,13 +463,23 @@ def ratings_page():
     mode = rating_mode()
     result = ratings.cached(rows, mode)
     ratio = {p["name"]: p["win_ratio"] for p in st.players(rows)}
+    vs_table = ratings.points_vs_table(rows)
     table = ratings.table(result, RATING_MIN_GAMES)
-    for row in table:
+    for rank, row in enumerate(table, 1):
+        row["rank"] = rank
         row["win_ratio"] = ratio.get(row["name"], 0.0)
+        row.update(
+            {f"vs_table_{k}": v for k, v in vs_table.get(row["player"], {}).items()}
+        )
+        row.setdefault("vs_table_average", None)
+        row.setdefault("vs_table_ci", None)
+    sort = st.Sort(RATING_COLUMNS, "rating")
+    table = sort.apply(table)
     evaluation = {m: ratings.evaluate(ratings.cached(rows, m)) for m in ratings.MODES}
     return render_template(
         "ratings.html",
         table=table,
+        sort=sort,
         mode=mode,
         evaluation=evaluation,
         min_games=RATING_MIN_GAMES,
