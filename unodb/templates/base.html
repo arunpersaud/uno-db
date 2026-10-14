@@ -9,7 +9,10 @@
   <meta name="author" content="Arun Persaud">
   <link rel="icon" href="{{ url_for('static', filename='draw4.png') }}" type="image/png">
   <link rel="stylesheet" href="{{ url_for('static', filename='pico.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='uPlot.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- no inline styles or eval for htmx (CSP); scripts are loaded once below -->
+  <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false, "historyCacheSize": 0}'>
   {% block css %}{% endblock %}
 </head>
 
@@ -30,6 +33,7 @@
       <ul>
         <li><a href="{{ url_for('stats.players') }}">Players</a></li>
         <li><a href="{{ url_for('stats.sessions') }}">Sessions</a></li>
+        <li><a href="{{ url_for('stats.compare') }}">Compare</a></li>
         <li><a href="/index.php">Old site</a></li>
       </ul>
     </nav>
@@ -43,6 +47,8 @@
     <small>Copyright 2003-2026 Arun Persaud. Code available on
       <a href="https://github.com/arunpersaud/uno-db">github</a>.</small>
   </footer>
-  {% block javascript %}{% endblock %}
+  <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='uPlot.iife.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='charts.js') }}"></script>
 </body>
 </html>

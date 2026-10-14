@@ -5,16 +5,17 @@ needs once and aggregates them here. Points: a win counts as 0 (the winner
 has the score WINNER in the database), as in the old PHP site.
 """
 
+import re
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from itertools import pairwise
 from statistics import fmean, pstdev
 
 from flask import request, url_for
 
 from .db import WINNER, query
 
-# sessions with fewer games are left out of the "highest/lowest" records
-MIN_RECORD_GAMES = 3
 MOVING_WINDOW = 20
 HISTOGRAM_BIN = 10
 HISTOGRAM_MAX = 150  # last bin: this and more
@@ -23,7 +24,7 @@ SCORES_SQL = """
 SELECT session.id AS session, session.date, session.number_of_players,
        locations.name AS location, variations.name AS variation,
        games.id AS game, games.end_with_black_card AS black,
-       scores.player, players.name, scores.score
+       scores.player, players.name, scores.score, scores.position
 FROM scores
 JOIN games ON games.id = scores.game
 JOIN session ON session.id = games.session
@@ -107,17 +108,15 @@ def games(rows) -> list[dict]:
 
 def records(session_list: list[dict], game_list: list[dict]) -> dict:
     """Highest and lowest scoring sessions and games."""
-    counted = [s for s in session_list if s["games"] >= MIN_RECORD_GAMES]
 
     def by_average(entry):
         return entry["average"]
 
     return {
-        "high_session": max(counted, key=by_average, default=None),
-        "low_session": min(counted, key=by_average, default=None),
+        "high_session": max(session_list, key=by_average, default=None),
+        "low_session": min(session_list, key=by_average, default=None),
         "high_game": max(game_list, key=by_average, default=None),
         "low_game": min(game_list, key=by_average, default=None),
-        "min_games": MIN_RECORD_GAMES,
     }
 
 
@@ -159,7 +158,9 @@ def player(rows) -> dict:
     scores = [row["score"] for row in rows]
     summary = summarize(scores)
     summary["sessions"] = len({row["session"] for row in rows})
-    summary["first"] = rows[0]["date"] if rows else None
+    # unknown dates like 1???-??-?? sort first: skip them
+    dated = [row["date"] for row in rows if timestamp(row["date"], 0) is not None]
+    summary["first"] = dated[0] if dated else None
     summary["last"] = rows[-1]["date"] if rows else None
     summary["highest"] = max((points(s) for s in scores), default=0)
     summary["black"] = sum(row["black"] for row in rows)
@@ -179,24 +180,29 @@ def player(rows) -> dict:
     ]
 
     session_list = sessions(rows)
-    counted = [s for s in session_list if s["games"] >= MIN_RECORD_GAMES]
-    summary["best_session"] = min(counted, key=lambda s: s["average"], default=None)
-    summary["worst_session"] = max(counted, key=lambda s: s["average"], default=None)
+    summary["best_session"] = min(
+        session_list, key=lambda s: s["average"], default=None
+    )
+    summary["worst_session"] = max(
+        session_list, key=lambda s: s["average"], default=None
+    )
 
     return {"summary": summary, "group_sizes": group_sizes, "sessions": session_list}
 
 
-def player_charts(rows) -> dict:
-    """Series for the charts on a player page (drawn by uPlot)."""
+def moving_average(rows) -> list[float | None]:
+    """Average points of the last MOVING_WINDOW games, None before that."""
     pts = [points(row["score"]) for row in rows]
-    moving = [
+    return [
         round(fmean(pts[i + 1 - MOVING_WINDOW : i + 1]), 2)
         if i + 1 >= MOVING_WINDOW
         else None
         for i in range(len(pts))
     ]
 
-    # histogram: wins, then bins of HISTOGRAM_BIN points (0-9, 10-19, ...)
+
+def histogram(rows) -> dict:
+    """Games per points bin: wins, then bins of HISTOGRAM_BIN points."""
     labels = ["won"] + [
         f"{lo}–{lo + HISTOGRAM_BIN - 1}"
         for lo in range(0, HISTOGRAM_MAX, HISTOGRAM_BIN)
@@ -208,15 +214,213 @@ def player_charts(rows) -> dict:
             counts[0] += 1
         else:
             counts[1 + min(row["score"], HISTOGRAM_MAX) // HISTOGRAM_BIN] += 1
+    return {"labels": labels, "counts": counts}
 
+
+def day_numbers(rows) -> dict[int, int]:
+    """game id -> number of the game on its day (0, 1, ...).
+
+    Per day, not per session: some days have several sessions.
+    """
+    days = defaultdict(set)
+    for row in rows:
+        days[row["date"]].add((row["session"], row["game"]))
+    return {
+        game: i for games in days.values() for i, (_, game) in enumerate(sorted(games))
+    }
+
+
+# a longer pause in a player's games breaks the line in the date charts
+BREAK_AFTER = 365 * 24 * 3600
+
+
+def time_series(players_rows: list[list], nr: dict) -> dict:
+    """Moving averages over time for several players, on one shared x axis.
+
+    In each series, None means "no game of this player at that time" (the
+    chart connects across) except at the indices in "breaks", where the
+    player paused for more than BREAK_AFTER (the chart leaves a gap there).
+    Games without a usable date are left out.
+    """
+    values = []
+    pauses = []
+    for rows in players_rows:
+        moving = moving_average(rows)
+        v = {
+            t: m
+            for row, m in zip(rows, moving, strict=True)
+            if (t := timestamp(row["date"], nr[row["game"]])) is not None
+        }
+        times = sorted(v)
+        # one second after the last game before the pause
+        pauses.append({a + 1 for a, b in pairwise(times) if b - a > BREAK_AFTER})
+        values.append(v)
+    x = sorted(set().union(*values, *pauses))
+    index = {t: i for i, t in enumerate(x)}
+    return {
+        "x": x,
+        "series": [[v.get(t) for t in x] for v in values],
+        "breaks": [sorted(index[t] for t in p) for p in pauses],
+    }
+
+
+def player_charts(rows, by_date: bool = False) -> dict:
+    """Series for the charts on a player page (drawn by uPlot).
+
+    x: game number, or the time of the game (games without a usable date
+    are left out of that chart).
+    """
+    if by_date:
+        ts = time_series([rows], day_numbers(rows))
+        x, moving, breaks = ts["x"], ts["series"][0], ts["breaks"][0]
+    else:
+        x = list(range(1, len(rows) + 1))
+        moving, breaks = moving_average(rows), []
     return {
         "moving": {
             "window": MOVING_WINDOW,
-            "game": list(range(1, len(pts) + 1)),
-            "date": [row["date"] for row in rows],
+            "by_date": by_date,
+            "x": x,
+            "date": [row["date"] for row in rows] if not by_date else [],
             "average": moving,
+            "breaks": breaks,
         },
-        "histogram": {"labels": labels, "counts": counts},
+        "histogram": histogram(rows),
+    }
+
+
+def ahead(a: int, b: int) -> bool:
+    """Did score a finish ahead of score b in the same game?"""
+    return points(a) < points(b) or (a == WINNER and b != WINNER)
+
+
+def compare(players: list[tuple[str, list]]) -> dict:
+    """Side by side stats of several players (name, chronological rows).
+
+    "together" counts only the games in which all of them played.
+    """
+    shared = set.intersection(*({row["game"] for row in rows} for _, rows in players))
+    result = {
+        "shared": len(shared),
+        "overall": [
+            {"name": name, **summarize([row["score"] for row in rows])}
+            for name, rows in players
+        ],
+        "together": [
+            {
+                "name": name,
+                **summarize([row["score"] for row in rows if row["game"] in shared]),
+            }
+            for name, rows in players
+        ],
+        "head_to_head": None,
+        "seating": None,
+    }
+    if len(players) != 2 or not shared:
+        return result
+
+    (name_a, rows_a), (name_b, rows_b) = players
+    a = {row["game"]: row for row in rows_a if row["game"] in shared}
+    b = {row["game"]: row for row in rows_b if row["game"] in shared}
+    result["head_to_head"] = {
+        "a": name_a,
+        "b": name_b,
+        "a_ahead": sum(ahead(a[g]["score"], b[g]["score"]) for g in shared),
+        "b_ahead": sum(ahead(b[g]["score"], a[g]["score"]) for g in shared),
+        "a_wins": sum(a[g]["score"] == WINNER for g in shared),
+        "b_wins": sum(b[g]["score"] == WINNER for g in shared),
+    }
+
+    # the old site's "anti-rumor": does it matter how far apart they sit?
+    # distance = seats from a to b in seating order
+    by_distance = defaultdict(lambda: ([], []))
+    for g in shared:
+        size = a[g]["number_of_players"]
+        distance = (b[g]["position"] - a[g]["position"]) % size
+        by_distance[distance][0].append(a[g]["score"])
+        by_distance[distance][1].append(b[g]["score"])
+    average_a = result["together"][0]["average"]
+    average_b = result["together"][1]["average"]
+    result["seating"] = [
+        {
+            "distance": distance,
+            "games": len(sa),
+            "a": summarize(sa)["average"],
+            "b": summarize(sb)["average"],
+            "a_diff": summarize(sa)["average"] - average_a,
+            "b_diff": summarize(sb)["average"] - average_b,
+        }
+        for distance, (sa, sb) in sorted(by_distance.items())
+    ]
+    return result
+
+
+DATE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
+
+
+def timestamp(date: str, nr: int) -> int | None:
+    """Unix time for the nr-th game of a day (one hour apart).
+
+    Day or month 00 (unknown) count as 01; unparsable dates give None.
+    """
+    match = DATE.fullmatch(date)
+    if not match:
+        return None
+    year, month, day = (int(x) for x in match.groups())
+    try:
+        start = datetime(year, max(month, 1), max(day, 1), tzinfo=UTC)
+    except ValueError:
+        return None
+    return int(start.timestamp()) + 3600 * nr
+
+
+def compare_charts(
+    players: list[tuple[str, list]], together: bool, by_date: bool
+) -> dict:
+    """Chart series for the compare page.
+
+    together: only the games in which all of them played.
+    by_date: x = time of the game (games of a day an hour apart),
+    otherwise x = game number (each player's own count).
+    """
+    if together:
+        shared = set.intersection(
+            *({row["game"] for row in rows} for _, rows in players)
+        )
+        players = [
+            (name, [row for row in rows if row["game"] in shared])
+            for name, rows in players
+        ]
+
+    if by_date:
+        nr = day_numbers(row for _, rows in players for row in rows)
+        ts = time_series([rows for _, rows in players], nr)
+        x, series, breaks = ts["x"], ts["series"], ts["breaks"]
+    else:
+        length = max((len(rows) for _, rows in players), default=0)
+        x = list(range(1, length + 1))
+        series = [
+            moving_average(rows) + [None] * (length - len(rows)) for _, rows in players
+        ]
+        breaks = [[] for _ in players]
+
+    hists = [histogram(rows) for _, rows in players]
+    return {
+        "window": MOVING_WINDOW,
+        "together": together,
+        "by_date": by_date,
+        "names": [name for name, _ in players],
+        "x": x,
+        "series": series,
+        "breaks": breaks,
+        "histogram": {
+            "labels": hists[0]["labels"] if hists else [],
+            # share of the player's games, so players with few games compare
+            "percent": [
+                [round(100 * c / max(sum(h["counts"]), 1), 1) for c in h["counts"]]
+                for h in hists
+            ],
+        },
     }
 
 

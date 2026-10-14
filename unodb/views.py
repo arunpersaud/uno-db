@@ -4,6 +4,7 @@ from flask import (
     Blueprint,
     abort,
     jsonify,
+    make_response,
     redirect,
     render_template,
     request,
@@ -22,6 +23,8 @@ SESSION_COLUMNS = {
     "games": True,
     "average": True,
 }
+MAX_COMPARE = 6  # chart colors that stay apart, also for color blindness
+
 PLAYER_COLUMNS = {
     "name": False,
     "games": True,
@@ -169,7 +172,7 @@ def players():
 
 def find_player(name: str):
     """(players row, None), or (None, redirect to the canonical URL)."""
-    by_slug = {slug(row["name"]): row for row in query("SELECT * FROM players")}
+    by_slug = players_by_slug()
     row = by_slug.get(slug(name))
     if row is None:
         abort(404)
@@ -186,9 +189,12 @@ def player(name):
         return response
     data = st.player(st.all_scores(" WHERE scores.player = ?", (row["id"],)))
     sort = st.Sort(SESSION_COLUMNS | {"wins": True}, "date")
+    by_date = request.args.get("x") == "date"
     return render_template(
         "player.html",
         name=row["name"],
+        by_date=by_date,
+        all_players=all_players_by_games(),
         summary=data["summary"],
         group_sizes=data["group_sizes"],
         sessions=sort.apply(newest_first(data["sessions"])),
@@ -202,4 +208,100 @@ def player_charts(name):
     if response:
         return response
     rows = st.all_scores(" WHERE scores.player = ?", (row["id"],))
-    return jsonify(st.player_charts(rows))
+    return jsonify(st.player_charts(rows, by_date=request.args.get("x") == "date"))
+
+
+def chart_options() -> dict:
+    """Chart options from the URL, as query arguments for links."""
+    keep = {}
+    if request.args.get("games") == "together":
+        keep["games"] = "together"
+    if request.args.get("x") == "date":
+        keep["x"] = "date"
+    return keep
+
+
+def all_players_by_games() -> list[dict]:
+    """All players, most games first (for the player pickers)."""
+    players = st.players(st.all_scores())
+    players.sort(key=lambda p: (-p["games"], p["name"]))
+    return players
+
+
+def players_by_slug() -> dict:
+    return {slug(row["name"]): row for row in query("SELECT * FROM players")}
+
+
+def compare_url(slugs: list[str], **args) -> str:
+    if not slugs:
+        return url_for(".compare", **args)
+    return url_for(".compare", names="/".join(slugs), **args)
+
+
+@stats.route("/compare/")
+@stats.route("/compare/<path:names>")
+def compare(names=""):
+    known = players_by_slug()
+    requested = [n for n in names.split("/") if n]
+    selected = []
+    for name in requested:
+        if slug(name) not in known:
+            abort(404)
+        if slug(name) not in selected:
+            selected.append(slug(name))
+    keep = chart_options()
+
+    error = None
+    if added := request.args.get("add", "").strip():
+        if slug(added) not in known:
+            error = f"There is no player called {added}."
+        elif slug(added) in selected:
+            error = f"{known[slug(added)]['name']} is already in the comparison."
+        elif len(selected) >= MAX_COMPARE:
+            error = f"At most {MAX_COMPARE} players can be compared."
+        else:
+            return redirect(compare_url(selected + [slug(added)], **keep))
+    elif selected[:MAX_COMPARE] != requested:
+        return redirect(compare_url(selected[:MAX_COMPARE], **keep), 301)
+
+    players = [known[s] for s in selected]
+    data = None
+    if len(players) >= 2:
+        data = st.compare(
+            [
+                (p["name"], st.all_scores(" WHERE scores.player = ?", (p["id"],)))
+                for p in players
+            ]
+        )
+    # status 200 even with an error message: htmx doesn't swap in 4xx pages
+    response = make_response(
+        render_template(
+            "compare.html",
+            players=players,
+            selected=selected,
+            data=data,
+            keep=keep,
+            error=error,
+            all_players=all_players_by_games(),
+            max_players=MAX_COMPARE,
+            compare_url=compare_url,
+        )
+    )
+    # htmx shows this in the address bar (not the ?add=... request)
+    response.headers["HX-Push-Url"] = compare_url(selected, **keep)
+    return response
+
+
+@stats.route("/compare.json/<path:names>")
+def compare_charts(names):
+    known = players_by_slug()
+    selected = [slug(n) for n in names.split("/") if n]
+    if not 2 <= len(selected) <= MAX_COMPARE or any(s not in known for s in selected):
+        abort(404)
+    players = [
+        (known[s]["name"], st.all_scores(" WHERE scores.player = ?", (known[s]["id"],)))
+        for s in selected
+    ]
+    together = request.args.get("games") == "together"
+    by_date = request.args.get("x") == "date"
+    return jsonify(st.compare_charts(players, together, by_date))

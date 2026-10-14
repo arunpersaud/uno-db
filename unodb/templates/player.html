@@ -1,9 +1,6 @@
 {% extends "base.html" %}
-{% from "_macros.html" import session_link %}
+{% from "_macros.html" import session_link, chart_switches, player_picker %}
 {% block title %}{{ name }} – The UNO database{% endblock %}
-{% block css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='uPlot.min.css') }}">
-{% endblock %}
 {% block content %}
 <hgroup>
   <h1>{{ name }}</h1>
@@ -30,15 +27,18 @@
 <p>Best session: {{ session_link(summary.best_session) }}
   ({{ summary.best_session.average|number }} points per game).
   Worst session: {{ session_link(summary.worst_session) }}
-  ({{ summary.worst_session.average|number }} points per game).
-  <small>Sessions with at least 3 games.</small></p>
+  ({{ summary.worst_session.average|number }} points per game).</p>
 {% endif %}
+
+{{ player_picker(url_for('stats.compare', names=name|slug), all_players,
+                 [name|slug], label="Compare with", boost=false) }}
 
 <section>
   <h2>Points per game over time</h2>
+  {{ chart_switches(url_for('stats.player', name=name|slug), {"x": "date"} if by_date else {}) }}
   <p>Average of the last <span id="window">20</span> games; fewer points is better.</p>
   <div class="chart" id="moving-chart"
-       data-src="{{ url_for('stats.player_charts', name=name|slug) }}"></div>
+       data-src="{{ url_for('stats.player_charts', name=name|slug, x='date' if by_date else none) }}"></div>
 </section>
 
 <section>
@@ -98,8 +98,4 @@
   </tbody>
 </table>
 </div>
-{% endblock %}
-{% block javascript %}
-<script src="{{ url_for('static', filename='uPlot.iife.min.js') }}"></script>
-<script src="{{ url_for('static', filename='charts.js') }}"></script>
 {% endblock %}

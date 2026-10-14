@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% from "_macros.html" import swatch, chart_switches, player_picker, htmx_attrs, th %}
+{% block title %}Compare players – The UNO database{% endblock %}
+{% block content %}
+{% set here = compare_url(selected, **keep) %}
+<h1>Compare players</h1>
+
+<ul class="chips">
+  {% for p in players %}
+  {% set rest = selected[:loop.index0] + selected[loop.index:] %}
+  {% set without = compare_url(rest, **keep) %}
+  <li>{{ swatch(loop.index) }}
+    <a href="{{ url_for('stats.player', name=p.name|slug) }}">{{ p.name }}</a>
+    <a href="{{ without }}" {{ htmx_attrs(without) }} class="remove"
+       aria-label="Remove {{ p.name }}" title="Remove {{ p.name }}">×</a></li>
+  {% endfor %}
+</ul>
+
+{% if players|length < max_players %}
+{{ player_picker(here, all_players, selected, keep) }}
+{% else %}
+<p>At most {{ max_players }} players can be compared.</p>
+{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+{% if not data %}
+<p>Pick at least two players. Most games:
+  {% for p in all_players[:10] if p.name|slug not in selected %}
+  {% set with_p = compare_url(selected + [p.name|slug], **keep) %}
+  <a href="{{ with_p }}" {{ htmx_attrs(with_p) }}>{{ p.name }}</a>{{ "," if not loop.last }}
+  {% endfor %}
+</p>
+{% else %}
+
+{{ chart_switches(here, keep, together=true) }}
+
+<div class="overflow-auto">
+<table class="striped numbers">
+  <thead>
+    <tr>
+      <th></th>
+      <th colspan="5" class="group">All their games</th>
+      <th colspan="4" class="group">The {{ data.shared }} games together</th>
+    </tr>
+    <tr>
+      <th>Player</th>
+      <th>Games</th><th>Wins</th><th>Win rate</th><th>Points per game</th><th>σ</th>
+      <th>Games</th><th>Wins</th><th>Win rate</th><th>Points per game</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for o in data.overall %}
+    {% set t = data.together[loop.index0] %}
+    <tr>
+      <td>{{ swatch(loop.index) }} {{ o.name }}</td>
+      <td>{{ o.games }}</td><td>{{ o.wins }}</td><td>{{ o.win_rate|percent }}</td>
+      <td>{{ o.average|number }}</td><td>{{ o.sigma|number }}</td>
+      <td>{{ t.games }}</td><td>{{ t.wins }}</td><td>{{ t.win_rate|percent }}</td>
+      <td>{{ t.average|number }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if data.head_to_head %}
+{% set h = data.head_to_head %}
+<p>In {{ data.shared }} games together, {{ h.a }} finished ahead of {{ h.b }}
+  {{ h.a_ahead }} times and {{ h.b }} ahead of {{ h.a }} {{ h.b_ahead }} times
+  ({{ h.a }} won {{ h.a_wins }} of them, {{ h.b }} {{ h.b_wins }}).</p>
+{% endif %}
+
+<section>
+  <h2>Points per game over time</h2>
+  <p>Average of the last <span id="window">20</span> games
+    {%- if keep.games %} they played together{% endif %}; fewer points is better.</p>
+  <div class="chart" id="compare-chart"
+       data-src="{{ url_for('stats.compare_charts', names=selected|join('/'), **keep) }}"></div>
+</section>
+
+<section>
+  <h2>Points in a game</h2>
+  <p>Share of each player's games{% if keep.games %} together{% endif %}.</p>
+  <div class="small-multiples">
+    {% for p in players %}
+    <figure>
+      <figcaption>{{ swatch(loop.index) }} {{ p.name }}</figcaption>
+      <div class="chart-small" data-histogram="{{ loop.index0 }}"></div>
+    </figure>
+    {% endfor %}
+  </div>
+</section>
+
+{% if data.seating %}
+{% set h = data.head_to_head %}
+<section>
+  <h2>Seating</h2>
+  <p>Does it matter where {{ h.b }} sits relative to {{ h.a }}? Distance = seats
+    from {{ h.a }} to {{ h.b }} in seating order (1: {{ h.b }} sits right after
+    {{ h.a }}). Points per game, in brackets the difference to their average in
+    the games together.</p>
+  <div class="overflow-auto">
+  <table class="striped numbers">
+    <thead>
+      <tr><th>Distance</th><th>Games</th><th>{{ h.a }}</th><th>{{ h.b }}</th></tr>
+    </thead>
+    <tbody>
+      {% for s in data.seating %}
+      <tr>
+        <td>{{ s.distance }}</td>
+        <td>{{ s.games }}</td>
+        <td>{{ s.a|number }} ({{ "%+.1f"|format(s.a_diff) }})</td>
+        <td>{{ s.b|number }} ({{ "%+.1f"|format(s.b_diff) }})</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

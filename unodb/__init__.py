@@ -5,9 +5,12 @@ Configuration comes from environment variables with a FLASK_ prefix:
     FLASK_DATABASE     SQLite file (default: instance/uno.sqlite)
 """
 
+import hashlib
 import os
+from functools import cache
+from pathlib import Path
 
-from flask import Flask
+from flask import Flask, request
 
 from . import db, views
 
@@ -43,9 +46,32 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     db.init_app(app)
 
+    @cache
+    def file_hash(filename: str) -> str | None:
+        path = Path(app.static_folder, filename)
+        if not path.is_file():
+            return None
+        return hashlib.sha256(path.read_bytes()).hexdigest()[:12]
+
+    # static URLs carry a hash of the file (?v=...), so a changed file has
+    # a new URL and browsers and Cloudflare may keep each version for long
+    @app.url_defaults
+    def static_version(endpoint, values):
+        if endpoint != "static" or "filename" not in values:
+            return
+        if version := file_hash(values["filename"]):
+            values["v"] = version
+
     @app.after_request
-    def set_security_headers(response):
+    def set_headers(response):
         response.headers.update(SECURITY_HEADERS)
+        if request.endpoint == "static":
+            response.cache_control.public = True
+            if "v" in request.args:
+                response.cache_control.max_age = 365 * 24 * 3600
+                response.cache_control.immutable = True
+            else:
+                response.cache_control.no_cache = True
         return response
 
     app.register_blueprint(views.stats)

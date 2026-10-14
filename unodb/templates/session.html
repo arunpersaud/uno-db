@@ -32,7 +32,7 @@
       {% elif score is none %}<td></td>
       {% else %}<td>{{ score }}</td>{% endif %}
       {% endfor %}
-      <td>{{ "yes" if game.black }}</td>
+      <td>{% if game.black %}<span title="Ended with a black card" aria-label="Ended with a black card">✓</span>{% endif %}</td>
     </tr>
     {% endfor %}
   </tbody>

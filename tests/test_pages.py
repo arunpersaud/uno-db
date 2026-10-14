@@ -17,7 +17,8 @@ def test_index(client):
     assert "4 games in 3 sessions" in html
     assert "A total of 10 scores" in html
     assert "Lowest scoring game ever: 3.50" in html
-    assert "Lowest scoring session" not in html  # none with 3 games
+    assert "Lowest scoring session: 3.50" in html  # a single game counts
+    assert "Highest scoring session: 16.17" in html
     assert "2004-05-28 to 2004-06-01" in html
 
 
@@ -81,7 +82,7 @@ def test_player(client):
 
 def test_player_charts(client):
     data = client.get("/player/cy-young/charts.json").get_json()
-    assert data["moving"]["game"] == [1, 2, 3, 4]
+    assert data["moving"]["x"] == [1, 2, 3, 4]
     assert data["moving"]["average"] == [None] * 4  # fewer than 20 games
     hist = dict(
         zip(data["histogram"]["labels"], data["histogram"]["counts"], strict=True)
@@ -89,6 +90,19 @@ def test_player_charts(client):
     assert hist["won"] == 0
     assert hist["0–9"] == hist["20–29"] == hist["30–39"] == hist["50–59"] == 1
     assert sum(hist.values()) == 4
+
+
+def test_player_charts_by_date(client):
+    data = client.get("/player/cy-young/charts.json?x=date").get_json()
+    day1 = 1085702400  # 2004-05-28 UTC
+    day2 = 1086048000  # 2004-06-01 UTC
+    # games of a day an hour apart, also across two sessions on 2004-06-01
+    assert data["moving"]["x"] == [day1, day1 + 3600, day2, day2 + 3600]
+
+
+def test_black_card_mark(client):
+    html = client.get("/session/2004-05-28").text
+    assert html.count("✓</span>") == 1
 
 
 def test_player_charts_redirect(client):
@@ -153,3 +167,91 @@ def test_old_links_go_to_php(client):
     response = client.get("/?name=Arun&mingames=0")
     assert response.status_code == 302
     assert response.location == "/index.php?name=Arun&mingames=0"
+
+
+def test_compare_empty(client):
+    html = client.get("/compare/").text
+    assert "Pick at least two players" in html
+
+
+def test_compare(client):
+    response = client.get("/compare/ann/bob")
+    assert response.status_code == 200
+    html = response.text
+    assert "The 2 games together" in html
+    assert "Ann finished ahead of Bob\n  1 times" in html
+    # seating: Bob sat right after Ann in both shared games
+    assert re.search(r"<td>1</td>\s*<td>2</td>\s*<td>2.5 \(\+0.0\)</td>", html)
+    assert response.headers["HX-Push-Url"] == "/compare/ann/bob"
+
+
+@pytest.mark.parametrize(
+    ("url", "location"),
+    [
+        ("/compare/Ann/bob/ann", "/compare/ann/bob"),
+        ("/compare/ann?add=Bob", "/compare/ann/bob"),
+        ("/compare/ann?add=Cy+Young&x=date", "/compare/ann/cy-young?x=date"),
+        ("/compare/ann/bob?add=cy-young&games=together", None),
+    ],
+)
+def test_compare_redirects(client, url, location):
+    response = client.get(url)
+    assert response.status_code in (301, 302)
+    if location:
+        assert response.location == location
+    else:
+        assert response.location == "/compare/ann/bob/cy-young?games=together"
+
+
+def test_compare_add_unknown(client):
+    response = client.get("/compare/ann?add=<b>Zed</b>")
+    assert response.status_code == 200  # htmx only swaps in 2xx responses
+    assert "There is no player called &lt;b&gt;Zed&lt;/b&gt;." in response.text
+
+
+def test_compare_add_twice(client):
+    html = client.get("/compare/ann?add=ANN").text
+    assert "Ann is already in the comparison." in html
+
+
+def test_compare_limit(client, monkeypatch):
+    from unodb import views
+
+    monkeypatch.setattr(views, "MAX_COMPARE", 2)
+    html = client.get("/compare/ann/bob?add=cy-young").text
+    assert "At most 2 players can be compared." in html
+    assert client.get("/compare/ann/bob/cy-young").location == "/compare/ann/bob"
+
+
+def test_compare_unknown_player(client):
+    assert client.get("/compare/ann/nobody").status_code == 404
+
+
+def test_compare_charts(client):
+    data = client.get("/compare.json/ann/cy-young").get_json()
+    assert data["names"] == ["Ann", "Cy Young"]
+    assert data["x"] == [1, 2, 3, 4]  # Cy Young has 4 games, Ann 3
+    assert len(data["series"][0]) == len(data["series"][1]) == 4
+
+    data = client.get("/compare.json/ann/cy-young?games=together").get_json()
+    assert data["x"] == [1, 2, 3]
+
+    data = client.get("/compare.json/ann/bob?x=date").get_json()
+    # games 1, 2 (together), 3 (Ann) and 4 (Bob): 2 on each day
+    assert len(data["x"]) == 4
+    assert data["x"] == sorted(data["x"])
+
+
+@pytest.mark.parametrize("url", ["/compare.json/ann", "/compare.json/ann/nobody"])
+def test_compare_charts_not_found(client, url):
+    assert client.get(url).status_code == 404
+
+
+def test_static_urls_are_versioned(client):
+    html = client.get("/").text
+    match = re.search(r'src="/static/charts\.js\?v=([0-9a-f]{12})"', html)
+    assert match
+    response = client.get(f"/static/charts.js?v={match[1]}")
+    assert "max-age=31536000" in response.headers["Cache-Control"]
+    assert "immutable" in response.headers["Cache-Control"]
+    assert "no-cache" in client.get("/static/charts.js").headers["Cache-Control"]

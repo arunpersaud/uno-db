@@ -39,9 +39,8 @@ def test_player_streak_and_sessions():
     data = stats.player(rows)
     assert data["summary"]["streak"] == 2
     assert data["summary"]["highest"] == 40
-    # only session 1 has enough games for best/worst
-    assert data["summary"]["best_session"]["id"] == 1
-    assert data["summary"]["worst_session"]["id"] == 1
+    assert data["summary"]["best_session"]["id"] == 1  # 5 points in 4 games
+    assert data["summary"]["worst_session"]["id"] == 2  # 40 points in 1 game
     assert [g["size"] for g in data["group_sizes"]] == [3, 4]
 
 
@@ -65,11 +64,31 @@ def test_records():
     sessions = [
         {"id": 1, "games": 3, "average": 20.0},
         {"id": 2, "games": 5, "average": 10.0},
-        {"id": 3, "games": 1, "average": 99.0},  # too few games
+        {"id": 3, "games": 1, "average": 99.0},  # one game counts too
     ]
     games = [{"id": 7, "average": 5.0}, {"id": 8, "average": 50.0}]
     r = stats.records(sessions, games)
-    assert r["high_session"]["id"] == 1
+    assert r["high_session"]["id"] == 3
     assert r["low_session"]["id"] == 2
     assert r["high_game"]["id"] == 8
     assert r["low_game"]["id"] == 7
+
+
+@pytest.mark.parametrize(
+    ("date", "expected"),
+    [
+        ("2004-05-28", 1085702400),
+        ("2003-06-00", 1054425600),  # unknown day -> 1st of the month
+        ("1???-??-??", None),
+        ("2003-02-30", None),
+    ],
+)
+def test_timestamp(date, expected):
+    assert stats.timestamp(date, 0) == expected
+
+
+def test_ahead():
+    assert stats.ahead(WINNER, 0)  # a win beats 0 points
+    assert not stats.ahead(0, WINNER)
+    assert stats.ahead(3, 10)
+    assert not stats.ahead(10, 10)

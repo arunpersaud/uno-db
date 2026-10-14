@@ -86,3 +86,109 @@ tr:target td {
 header nav {
   flex-wrap: wrap;
 }
+
+/* categorical colors for compared players (dataviz reference palette,
+   validated for color blindness on Pico's light and dark backgrounds) */
+:root {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+  }
+}
+
+:root[data-theme="dark"] {
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  border-radius: 0.2em;
+  vertical-align: -0.1em;
+}
+
+.series-1 { background-color: var(--series-1); }
+.series-2 { background-color: var(--series-2); }
+.series-3 { background-color: var(--series-3); }
+.series-4 { background-color: var(--series-4); }
+.series-5 { background-color: var(--series-5); }
+.series-6 { background-color: var(--series-6); }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0;
+}
+
+.chips li {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  border: var(--pico-border-width) solid var(--pico-muted-border-color);
+  border-radius: 2rem;
+}
+
+.chips .remove {
+  text-decoration: none;
+  font-size: 1.2em;
+  line-height: 1;
+  color: var(--pico-muted-color);
+}
+
+.picker {
+  max-width: 30rem;
+}
+
+.options label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.error {
+  color: var(--pico-del-color);
+}
+
+table.numbers th.group {
+  text-align: center;
+}
+
+.small-multiples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--pico-spacing);
+}
+
+.chart-small {
+  min-height: 170px;
+}
+
+.small-multiples figcaption {
+  font-weight: bold;
+}
+
+/* session tables: a clear line between the last game and the totals */
+table.scores tfoot tr:first-child > * {
+  border-top: 3px solid var(--pico-muted-color);
+}

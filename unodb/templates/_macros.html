@@ -14,3 +14,44 @@
 {% macro game_link(g) -%}
 <a href="{{ url_for('stats.session', date=g.date) }}#game-{{ g.id }}">{{ g.date }}</a>
 {%- endmacro %}
+
+{# swaps only <main> via htmx and updates the address bar; plain GET without JS #}
+{% macro htmx_attrs(url) -%}
+hx-get="{{ url }}" hx-target="main" hx-select="main" hx-swap="outerHTML show:none" hx-push-url="true"
+{%- endmacro %}
+
+{% macro swatch(i) -%}
+<span class="swatch series-{{ i }}" aria-hidden="true"></span>
+{%- endmacro %}
+
+{# chart options, applied as soon as a switch changes #}
+{% macro chart_switches(url, keep, together=false) -%}
+<form class="options" method="get" action="{{ url }}" {{ htmx_attrs(url) }} hx-trigger="change">
+  {% if together %}
+  <label><input type="checkbox" role="switch" name="games" value="together"
+    {{ "checked" if keep.games }}> Only games they all played together</label>
+  {% endif %}
+  <label><input type="checkbox" role="switch" name="x" value="date"
+    {{ "checked" if keep.x }}> Show over time instead of by game number</label>
+  <noscript><button type="submit">Apply</button></noscript>
+</form>
+{%- endmacro %}
+
+{# text field with autocomplete for adding a player #}
+{% macro player_picker(url, players, exclude=[], keep={}, label="Add a player", boost=true) -%}
+<form class="picker" method="get" action="{{ url }}" {% if boost %}{{ htmx_attrs(url) }}{% endif %}>
+  {% for key, value in keep.items() %}
+  <input type="hidden" name="{{ key }}" value="{{ value }}">
+  {% endfor %}
+  <fieldset role="group">
+    <input name="add" list="player-names" placeholder="{{ label }}…" aria-label="{{ label }}"
+      autocomplete="off" required>
+    <button type="submit">{{ "Add" if boost else "Compare" }}</button>
+  </fieldset>
+  <datalist id="player-names">
+    {% for p in players if p.name|slug not in exclude %}
+    <option value="{{ p.name }}"></option>
+    {% endfor %}
+  </datalist>
+</form>
+{%- endmacro %}
