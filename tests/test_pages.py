@@ -180,8 +180,12 @@ def test_compare(client):
     html = response.text
     assert "The 2 games together" in html
     assert "Ann finished ahead of Bob\n  1 times" in html
-    # seating: Bob sat right after Ann in both shared games
-    assert re.search(r"<td>1</td>\s*<td>2</td>\s*<td>2.5 \(\+0.0\)</td>", html)
+    # seating: Bob sat right after Ann in both shared games; Ann had 0 and 5
+    # points there (her average), sigma 2.5 -> 95% interval 1.96 * 2.5 / 1
+    assert re.search(r"<td>1</td>\s*<td>2</td>\s*<td[^>]*>2.5\s*\(\+0.0 ± 4.9\)", html)
+    assert (
+        "<title>Ann, distance 1: +0.0 ± 4.9 points per game (2 games)</title>" in html
+    )
     assert response.headers["HX-Push-Url"] == "/compare/ann/bob"
 
 
@@ -255,3 +259,14 @@ def test_static_urls_are_versioned(client):
     assert "max-age=31536000" in response.headers["Cache-Control"]
     assert "immutable" in response.headers["Cache-Control"]
     assert "no-cache" in client.get("/static/charts.js").headers["Cache-Control"]
+
+
+@pytest.mark.parametrize(
+    "url", ["/compare/ann/bob?x=date&games=together", "/player/ann?x=date"]
+)
+def test_switches_can_be_turned_off(client, url):
+    """The switch form's URL has no options, only the checked switches add them."""
+    html = client.get(url).text
+    form = re.search(r'<form class="options"[^>]*>', html)[0]
+    assert re.search(r'hx-get="/(compare|player)/[a-z/]+"', form)
+    assert "?" not in form

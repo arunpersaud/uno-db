@@ -2,7 +2,9 @@
 {% from "_macros.html" import swatch, chart_switches, player_picker, htmx_attrs, th %}
 {% block title %}Compare players – The UNO database{% endblock %}
 {% block content %}
-{% set here = compare_url(selected, **keep) %}
+{# forms send their own options, so their URL has none (else a switch
+   that is turned off would stay on through the URL) #}
+{% set here = compare_url(selected) %}
 <h1>Compare players</h1>
 
 <ul class="chips">
@@ -97,10 +99,47 @@
   <h2>Seating</h2>
   <p>Does it matter where {{ h.b }} sits relative to {{ h.a }}? Distance = seats
     from {{ h.a }} to {{ h.b }} in seating order (1: {{ h.b }} sits right after
-    {{ h.a }}). Points per game, in brackets the difference to their average in
-    the games together.</p>
+    {{ h.a }}). The chart shows how many points per game more (up) or fewer
+    (down) than their average in the games together each of them had. The bars
+    are 95% confidence intervals: where a bar crosses the zero line, the
+    difference can easily be chance.</p>
+
+  {# dot plot with error bars, drawn on the server #}
+  {% set W, H = 640, 260 %}
+  {% set left, right, top, bottom = 44, 8, 10, 36 %}
+  {% set pw, ph = W - left - right, H - top - bottom %}
+  {% set r = data.seating_range %}
+  {% set band = pw / data.seating|length %}
+  {% macro y(v) %}{{ "%.1f"|format(top + ph / 2 - v / r * ph / 2) }}{% endmacro %}
+  <svg class="seating-chart" viewBox="0 0 {{ W }} {{ H }}" role="img"
+       aria-label="Points per game compared to the average, by seating distance">
+    {% for t in [-r, -r / 2, 0, r / 2, r] %}
+    <line class="{{ 'zero' if t == 0 else 'grid' }}" x1="{{ left }}" x2="{{ W - right }}"
+          y1="{{ y(t) }}" y2="{{ y(t) }}"></line>
+    <text class="tick" x="{{ left - 6 }}" y="{{ y(t) }}" text-anchor="end"
+          dominant-baseline="middle">{{ "%+g"|format(t) if t else "0" }}</text>
+    {% endfor %}
+    {% for s in data.seating %}
+    {% set cx = left + band * (loop.index0 + 0.5) %}
+    <text class="tick" x="{{ cx }}" y="{{ H - bottom + 18 }}" text-anchor="middle">{{ s.distance }}</text>
+    {% for p in s.players %}
+    {% set x = "%.1f"|format(cx + (loop.index0 * 2 - 1) * 8) %}
+    {% set name = h.a if loop.first else h.b %}
+    <g class="series-{{ loop.index }}">
+      <title>{{ name }}, distance {{ s.distance }}: {{ "%+.1f"|format(p.diff) }}{% if p.ci is not none %} ± {{ "%.1f"|format(p.ci) }}{% endif %} points per game ({{ s.games }} games)</title>
+      {% if p.ci is not none %}
+      <line class="bar" x1="{{ x }}" x2="{{ x }}" y1="{{ y([p.diff - p.ci, -r]|max) }}" y2="{{ y([p.diff + p.ci, r]|min) }}"></line>
+      {% endif %}
+      <circle cx="{{ x }}" cy="{{ y(p.diff) }}" r="5"></circle>
+    </g>
+    {% endfor %}
+    {% endfor %}
+    <text class="tick" x="{{ left + pw / 2 }}" y="{{ H - 2 }}" text-anchor="middle">Seats from {{ h.a }} to {{ h.b }}</text>
+  </svg>
+  <p class="legend">{{ swatch(1) }} {{ h.a }} &nbsp; {{ swatch(2) }} {{ h.b }}</p>
+
   <div class="overflow-auto">
-  <table class="striped numbers">
+  <table class="numbers seating">
     <thead>
       <tr><th>Distance</th><th>Games</th><th>{{ h.a }}</th><th>{{ h.b }}</th></tr>
     </thead>
@@ -109,13 +148,19 @@
       <tr>
         <td>{{ s.distance }}</td>
         <td>{{ s.games }}</td>
-        <td>{{ s.a|number }} ({{ "%+.1f"|format(s.a_diff) }})</td>
-        <td>{{ s.b|number }} ({{ "%+.1f"|format(s.b_diff) }})</td>
+        {% for p in s.players %}
+        <td class="{{ p.tint }}">{{ p.average|number }}
+          ({{ "%+.1f"|format(p.diff) }}{% if p.ci is not none %} ± {{ "%.1f"|format(p.ci) }}{% endif %})</td>
+        {% endfor %}
       </tr>
       {% endfor %}
     </tbody>
   </table>
   </div>
+  <p><small>Points per game (difference to their average ± 95% interval).
+    <span class="key better-2">Fewer points than usual</span>
+    <span class="key worse-2">More points than usual</span>;
+    the stronger the color, the bigger the difference (2, 5, 10 points).</small></p>
 </section>
 {% endif %}
 {% endif %}

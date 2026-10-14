@@ -192,3 +192,74 @@ table.numbers th.group {
 table.scores tfoot tr:first-child > * {
   border-top: 3px solid var(--pico-muted-color);
 }
+
+/* seating: dot plot with confidence intervals */
+.seating-chart {
+  width: 100%;
+  height: auto;
+  max-width: 48rem;
+  display: block;
+}
+
+.seating-chart .grid {
+  stroke: var(--pico-muted-border-color);
+  stroke-width: 1;
+}
+
+.seating-chart .zero {
+  stroke: var(--pico-muted-color);
+  stroke-width: 1.5;
+}
+
+.seating-chart .tick {
+  fill: var(--pico-muted-color);
+  font-size: 12px;
+}
+
+.seating-chart .bar {
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.seating-chart circle {
+  stroke: var(--pico-background-color);
+  stroke-width: 2;
+}
+
+.seating-chart .series-1 { background: none; }
+.seating-chart .series-2 { background: none; }
+.seating-chart .series-1 circle { fill: var(--series-1); }
+.seating-chart .series-1 .bar { stroke: var(--series-1); }
+.seating-chart .series-2 circle { fill: var(--series-2); }
+.seating-chart .series-2 .bar { stroke: var(--series-2); }
+
+/* seating table: diverging tint, blue = fewer points (better), red = more,
+   gray is no tint; three steps */
+:root {
+  --better: #2a78d6;
+  --worse: #e34948;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --better: #3987e5;
+    --worse: #e66767;
+  }
+}
+
+:root[data-theme="dark"] {
+  --better: #3987e5;
+  --worse: #e66767;
+}
+
+.better-1 { background-color: color-mix(in srgb, var(--better) 15%, transparent); }
+.better-2 { background-color: color-mix(in srgb, var(--better) 30%, transparent); }
+.better-3 { background-color: color-mix(in srgb, var(--better) 50%, transparent); }
+.worse-1 { background-color: color-mix(in srgb, var(--worse) 15%, transparent); }
+.worse-2 { background-color: color-mix(in srgb, var(--worse) 30%, transparent); }
+.worse-3 { background-color: color-mix(in srgb, var(--worse) 50%, transparent); }
+
+.key {
+  padding: 0 0.4rem;
+  border-radius: 0.2rem;
+}

@@ -5,6 +5,7 @@ needs once and aggregates them here. Points: a win counts as 0 (the winner
 has the score WINNER in the database), as in the old PHP site.
 """
 
+import math
 import re
 from collections import defaultdict
 from dataclasses import dataclass
@@ -345,14 +346,42 @@ def compare(players: list[tuple[str, list]]) -> dict:
         {
             "distance": distance,
             "games": len(sa),
-            "a": summarize(sa)["average"],
-            "b": summarize(sb)["average"],
-            "a_diff": summarize(sa)["average"] - average_a,
-            "b_diff": summarize(sb)["average"] - average_b,
+            "players": [
+                seat_stats(sa, average_a),
+                seat_stats(sb, average_b),
+            ],
         }
         for distance, (sa, sb) in sorted(by_distance.items())
     ]
+    # symmetric y range of the seating chart, in steps of 10 points
+    extent = max(
+        (
+            abs(p["diff"]) + (p["ci"] or 0)
+            for s in result["seating"]
+            for p in s["players"]
+        ),
+        default=0,
+    )
+    result["seating_range"] = max(10, 10 * math.ceil(extent / 10))
     return result
+
+
+def seat_stats(scores: list[int], average: float) -> dict:
+    """Points per game at one seating distance, compared to the average.
+
+    ci: half width of the 95% confidence interval of the mean (normal
+    approximation, 1.96 standard errors); None for a single game. The
+    uncertainty of the average itself is small (many more games) and left
+    out.
+    """
+    s = summarize(scores)
+    n = s["games"]
+    diff = s["average"] - average
+    ci = 1.96 * s["sigma"] / math.sqrt(n - 1) if n > 1 else None
+    # table tint: fewer points than usual is better
+    level = sum(abs(diff) >= limit for limit in (2, 5, 10))
+    tint = f"{'better' if diff < 0 else 'worse'}-{level}" if level else ""
+    return {"average": s["average"], "diff": diff, "ci": ci, "tint": tint}
 
 
 DATE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
