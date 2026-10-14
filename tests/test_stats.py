@@ -92,3 +92,18 @@ def test_ahead():
     assert not stats.ahead(0, WINNER)
     assert stats.ahead(3, 10)
     assert not stats.ahead(10, 10)
+
+
+def test_correlations_interval():
+    # perfectly related points over 10 games: r = 1, no Fisher interval
+    rows_a = [row(g, g) for g in range(10)]
+    rows_b = [row(g, 2 * g) for g in range(10)]
+    c = stats.correlations([("A", rows_a), ("B", rows_b)])
+    assert c["pair"]["r"] == pytest.approx(1.0)
+    assert c["matrix"][0][0] is None
+
+    # noisy but clearly positive: colored, interval above 0
+    rows_b = [row(g, g + (3 if g % 2 else -3)) for g in range(10)]
+    pair = stats.correlations([("A", rows_a), ("B", rows_b)])["pair"]
+    assert 0 < pair["low"] < pair["r"] < pair["high"]
+    assert pair["tint"].startswith("corr-pos-")

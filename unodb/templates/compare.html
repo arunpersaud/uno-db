@@ -24,15 +24,20 @@
 <p>At most {{ max_players }} players can be compared.</p>
 {% endif %}
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<p><small>Up to {{ max_players }} players. With exactly two you also get the
+  head-to-head count, a scatter plot of their points and the seating
+  analysis.</small></p>
 
-{% if not data %}
-<p>Pick at least two players. Most games:
-  {% for p in all_players[:10] if p.name|slug not in selected %}
+{% if players|length < max_players %}
+<p class="suggestions">{{ "Pick at least two players. " if not data }}Most games:
+  {% for p in suggestions %}
   {% set with_p = compare_url(selected + [p.name|slug], **keep) %}
   <a href="{{ with_p }}" {{ htmx_attrs(with_p) }}>{{ p.name }}</a>{{ "," if not loop.last }}
   {% endfor %}
 </p>
-{% else %}
+{% endif %}
+
+{% if data %}
 
 {{ chart_switches(here, keep, together=true) }}
 
@@ -78,6 +83,76 @@
     {%- if keep.games %} they played together{% endif %}; fewer points is better.</p>
   <div class="chart" id="compare-chart"
        data-src="{{ url_for('stats.compare_charts', names=selected|join('/'), **keep) }}"></div>
+</section>
+
+{% set c = data.correlation %}
+<section>
+  <h2>Correlation</h2>
+  {% if c.pair %}
+  {% set p = c.pair %}
+  {% set A, B = players[0].name, players[1].name %}
+  <p>Do {{ A }} and {{ B }} score high in the same games? One dot per game they
+    played together.
+    {% if p.r is not none %}
+    Correlation r = {{ "%.2f"|format(p.r) }}
+    {%- if p.low is not none %} (95% interval {{ "%.2f"|format(p.low) }} to
+    {{ "%.2f"|format(p.high) }}){% endif %}:
+    {% if p.tint %}{{ "a weak" if p.r|abs < 0.2 else "a" }}
+      {{ "positive" if p.r > 0 else "negative" }} relation
+      ({{ "both tend to score high in the same games" if p.r > 0
+          else "when one scores high, the other tends to score low" }}).
+    {% else %}no clear relation (the interval includes 0).{% endif %}
+    {% endif %}</p>
+  {% set S, top, left, cap = 360, 10, 44, 150 %}
+  {% set side = S - left - 24 %}
+  {% macro pos(v) %}{{ "%.1f"|format([v, cap]|min / cap * side) }}{% endmacro %}
+  <svg class="scatter" viewBox="0 0 {{ S }} {{ S }}" role="img"
+       aria-label="Points of {{ A }} against points of {{ B }} per game">
+    <g transform="translate({{ left }} {{ top }})">
+      {% for t in [0, 50, 100, 150] %}
+      {% set v = t / cap * side %}
+      <line class="grid" x1="{{ v }}" x2="{{ v }}" y1="0" y2="{{ side }}"></line>
+      <line class="grid" x1="0" x2="{{ side }}" y1="{{ side - v }}" y2="{{ side - v }}"></line>
+      <text class="tick" x="{{ v }}" y="{{ side + 16 }}" text-anchor="middle">{{ t }}{{ "+" if t == cap }}</text>
+      <text class="tick" x="-6" y="{{ side - v }}" text-anchor="end" dominant-baseline="middle">{{ t }}{{ "+" if t == cap }}</text>
+      {% endfor %}
+      {% for x, y in p.scatter %}
+      <circle cx="{{ pos(x) }}" cy="{{ "%.1f"|format(side - pos(y)|float) }}" r="3"></circle>
+      {% endfor %}
+      <text class="tick" x="{{ side / 2 }}" y="{{ side + 32 }}" text-anchor="middle">{{ A }}: points</text>
+    </g>
+    <text class="tick" transform="translate(10 {{ top + side / 2 }}) rotate(-90)" text-anchor="middle">{{ B }}: points</text>
+  </svg>
+  {% else %}
+  <p>Correlation r of the points of each pair in the games they played
+    together: +1 means both always score high in the same games, −1 the
+    opposite, 0 no relation. Colored only where the 95% interval excludes 0
+    (blue positive, red negative). Click a cell to compare the two.</p>
+  <div class="overflow-auto">
+  <table class="numbers correlation">
+    <thead>
+      <tr><th></th>{% for p in players %}<th>{{ swatch(loop.index) }} {{ p.name }}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+      {% for row in c.matrix %}
+      {% set i = loop.index0 %}
+      <tr>
+        <th>{{ swatch(loop.index) }} {{ players[i].name }}</th>
+        {% for cell in row %}
+        {% if cell is none %}<td>–</td>
+        {% else %}
+        {% set pair = compare_url([selected[i], selected[loop.index0]]) %}
+        <td class="{{ cell.tint }}"><a href="{{ pair }}" {{ htmx_attrs(pair) }}>
+          {%- if cell.r is none %}–{% else %}{{ "%+.2f"|format(cell.r) }}{% endif %}</a>
+          <br><small>{{ cell.games }} games</small></td>
+        {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
 </section>
 
 <section>

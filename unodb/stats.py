@@ -11,7 +11,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from itertools import pairwise
-from statistics import fmean, pstdev
+from statistics import StatisticsError, correlation, fmean, pstdev
 
 from flask import request, url_for
 
@@ -382,6 +382,59 @@ def seat_stats(scores: list[int], average: float) -> dict:
     level = sum(abs(diff) >= limit for limit in (2, 5, 10))
     tint = f"{'better' if diff < 0 else 'worse'}-{level}" if level else ""
     return {"average": s["average"], "diff": diff, "ci": ci, "tint": tint}
+
+
+def pearson(xs: list[float], ys: list[float]) -> float | None:
+    """Correlation coefficient r, None if it can't be computed."""
+    if len(xs) < 3:
+        return None
+    try:
+        return correlation(xs, ys)
+    except StatisticsError:  # one of them constant
+        return None
+
+
+def correlations(players: list[tuple[str, list]]) -> dict:
+    """Correlation of the points of each pair of players (name, rows).
+
+    Over the games both played. ci: 95% interval of r (Fisher
+    transformation); "tint" is only set when the interval excludes 0.
+    """
+    by_player = [
+        {row["game"]: points(row["score"]) for row in rows} for _, rows in players
+    ]
+    cells = {}
+    for i, a in enumerate(by_player):
+        for j in range(i + 1, len(by_player)):
+            b = by_player[j]
+            shared = sorted(a.keys() & b.keys())
+            xs = [a[g] for g in shared]
+            ys = [b[g] for g in shared]
+            r = pearson(xs, ys)
+            low = high = None
+            tint = ""
+            if r is not None and len(xs) > 3 and abs(r) < 1:
+                z = math.atanh(r)
+                half = 1.96 / math.sqrt(len(xs) - 3)
+                # rounded (+ 0.0 turns -0.0 into 0.0, no "-0.00" on the page)
+                low = round(math.tanh(z - half), 2) + 0.0
+                high = round(math.tanh(z + half), 2) + 0.0
+                if low > 0 or high < 0:
+                    level = 1 + sum(abs(r) >= limit for limit in (0.2, 0.4))
+                    tint = f"corr-{'pos' if r > 0 else 'neg'}-{level}"
+            cells[i, j] = cells[j, i] = {
+                "games": len(xs),
+                "r": r,
+                "low": low,
+                "high": high,
+                "tint": tint,
+                "scatter": list(zip(xs, ys, strict=True)),
+            }
+    n = len(players)
+    return {
+        "matrix": [[cells.get((i, j)) for j in range(n)] for i in range(n)],
+        "pair": cells.get((0, 1)) if n == 2 else None,
+    }
 
 
 DATE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")

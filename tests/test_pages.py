@@ -270,3 +270,29 @@ def test_switches_can_be_turned_off(client, url):
     form = re.search(r'<form class="options"[^>]*>', html)[0]
     assert re.search(r'hx-get="/(compare|player)/[a-z/]+"', form)
     assert "?" not in form
+
+
+def suggestions(html):
+    block = re.search(r'<p class="suggestions">(.*?)</p>', html, re.S)
+    return re.findall(r">([^<]+)</a>", block[1]) if block else []
+
+
+def test_compare_suggestions_stay(client):
+    assert suggestions(client.get("/compare/").text) == ["Cy Young", "Ann", "Bob"]
+    # picked players drop out, the others stay (also with two picked)
+    assert suggestions(client.get("/compare/ann").text) == ["Cy Young", "Bob"]
+    assert suggestions(client.get("/compare/ann/bob").text) == ["Cy Young"]
+
+
+def test_compare_correlation_matrix(client):
+    html = client.get("/compare/ann/bob/cy-young").text
+    assert '<table class="numbers correlation">' in html
+    # Ann 0, 5, 0 and Cy Young 30, 50, 7 points in their 3 games together
+    assert "+0.85</a>\n          <br><small>3 games</small>" in html
+
+
+def test_compare_correlation_scatter(client):
+    html = client.get("/compare/ann/cy-young").text
+    assert '<svg class="scatter"' in html
+    assert html.count('r="3"></circle>') == 3
+    assert "Correlation r = 0.85" in html

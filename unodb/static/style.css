@@ -263,3 +263,43 @@ table.scores tfoot tr:first-child > * {
   padding: 0 0.4rem;
   border-radius: 0.2rem;
 }
+
+/* correlation: scatter plot (two players) and matrix (more) */
+.scatter {
+  width: 100%;
+  max-width: 26rem;
+  height: auto;
+  display: block;
+}
+
+.scatter .grid {
+  stroke: var(--pico-muted-border-color);
+  stroke-width: 1;
+}
+
+.scatter .tick {
+  fill: var(--pico-muted-color);
+  font-size: 12px;
+}
+
+.scatter circle {
+  fill: var(--pico-primary);
+  fill-opacity: 0.35;
+}
+
+.corr-pos-1 { background-color: color-mix(in srgb, var(--better) 15%, transparent); }
+.corr-pos-2 { background-color: color-mix(in srgb, var(--better) 30%, transparent); }
+.corr-pos-3 { background-color: color-mix(in srgb, var(--better) 50%, transparent); }
+.corr-neg-1 { background-color: color-mix(in srgb, var(--worse) 15%, transparent); }
+.corr-neg-2 { background-color: color-mix(in srgb, var(--worse) 30%, transparent); }
+.corr-neg-3 { background-color: color-mix(in srgb, var(--worse) 50%, transparent); }
+
+table.correlation td,
+table.correlation th {
+  text-align: center;
+}
+
+table.correlation tbody th {
+  text-align: left;
+  white-space: nowrap;
+}

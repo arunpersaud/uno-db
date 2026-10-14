@@ -272,12 +272,14 @@ def compare(names=""):
     players = [known[s] for s in selected]
     data = None
     if len(players) >= 2:
-        data = st.compare(
-            [
-                (p["name"], st.all_scores(" WHERE scores.player = ?", (p["id"],)))
-                for p in players
-            ]
-        )
+        player_rows = [
+            (p["name"], st.all_scores(" WHERE scores.player = ?", (p["id"],)))
+            for p in players
+        ]
+        data = st.compare(player_rows)
+        data["correlation"] = st.correlations(player_rows)
+
+    everyone = all_players_by_games()
     # status 200 even with an error message: htmx doesn't swap in 4xx pages
     response = make_response(
         render_template(
@@ -287,7 +289,9 @@ def compare(names=""):
             data=data,
             keep=keep,
             error=error,
-            all_players=all_players_by_games(),
+            all_players=everyone,
+            # always the same number of suggestions, without the picked ones
+            suggestions=[p for p in everyone if slug(p["name"]) not in selected][:10],
             max_players=MAX_COMPARE,
             compare_url=compare_url,
         )
