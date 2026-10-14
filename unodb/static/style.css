@@ -336,7 +336,7 @@ tr.editing td {
 }
 
 .rules {
-  white-space: pre-line;
+  margin-bottom: var(--pico-spacing);
 }
 
 .confirm {

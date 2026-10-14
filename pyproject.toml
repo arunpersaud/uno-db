@@ -8,6 +8,7 @@ requires-python = ">=3.14"
 dependencies = [
     "flask>=3.1",
     "gunicorn>=23",
+    "markdown-it-py>=4.2.0",
     "webauthn>=3.0.1",
 ]
 

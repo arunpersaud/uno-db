@@ -11,6 +11,7 @@ from flask import (
     url_for,
 )
 
+from . import markdown
 from . import stats as st
 from .db import WINNER, query, query_one, read_only
 
@@ -41,6 +42,11 @@ PLAYER_COLUMNS = {
 def slug(name: str) -> str:
     """URL form of a player name: 'Raymond Wheeler' -> 'raymond-wheeler'."""
     return "-".join(name.lower().split())
+
+
+@stats.app_template_filter("markdown")
+def markdown_filter(text: str | None):
+    return markdown.render(text)
 
 
 @stats.app_template_filter()

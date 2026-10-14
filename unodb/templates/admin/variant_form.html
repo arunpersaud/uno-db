@@ -13,7 +13,14 @@
     placeholder="e.g. Uno with stacking"></label>
   <label>Short name <input type="text" name="short" value="{{ values.short }}" required maxlength="20"
     placeholder="e.g. stacking"><small>Letters, digits and '-', used in the address of the rules page.</small></label>
-  <label>Rules <textarea name="description" rows="8" required>{{ values.description or "" }}</textarea></label>
+  <label>Rules <textarea name="description" rows="12" required
+      aria-describedby="markdown-help">{{ values.description or "" }}</textarea>
+    <small id="markdown-help">You can use
+      <a href="https://commonmark.org/help/" rel="noopener">Markdown</a>:
+      <code>*</code> or <code>-</code> at the start of a line for a list,
+      <code>**bold**</code>, <code>*italic*</code>,
+      <code>[link text](https://…)</code>, an empty line for a new paragraph.
+      HTML is not allowed.</small></label>
   <button type="submit">Save</button>
 </form>
 {% endblock %}
