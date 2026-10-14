@@ -164,6 +164,7 @@ def start():
         "admin/start.html",
         passkeys=[dict(p, key=bytes_to_base64url(p["id"])) for p in passkeys],
         variants=query("SELECT id, name FROM variations ORDER BY id"),
+        rename=request.args.get("rename"),
     )
 
 
@@ -188,6 +189,24 @@ def invite(token):
 def logout():
     session.clear()
     return redirect(url_for("stats.index"))
+
+
+@admin.post("/passkeys/<key>/rename")
+@login_required
+def rename_passkey(key):
+    name = " ".join((request.form.get("name") or "").split())[:60] or None
+    changed = (
+        get_db()
+        .execute(
+            "UPDATE credentials SET name = ? WHERE id = ? AND user_id = ?",
+            (name, webauthn.base64url_to_bytes(key), g.user["id"]),
+        )
+        .rowcount
+    )
+    if not changed:
+        abort(404)
+    audit("passkey renamed", g.user["id"], credential=key, name=name)
+    return redirect(url_for("admin.start"))
 
 
 @admin.post("/passkeys/<key>/delete")

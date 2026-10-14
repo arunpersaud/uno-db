@@ -52,9 +52,25 @@
   <tbody>
     {% for p in passkeys %}
     <tr>
-      <td>{{ p.name or "–" }}</td>
+      {% if rename == p.key %}
+      <td colspan="3">
+        <form method="post" action="{{ url_for('admin.rename_passkey', key=p.key) }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <fieldset role="group">
+            <input type="text" name="name" value="{{ p.name or '' }}" maxlength="60"
+                   aria-label="Name of the passkey" placeholder="e.g. my phone" autofocus>
+            <button type="submit">Save</button>
+          </fieldset>
+          <a href="{{ url_for('admin.start') }}">Cancel</a>
+        </form>
+      </td>
+      {% else %}
+      <td>{{ p.name or "–" }}
+        <a href="{{ url_for('admin.start', rename=p.key) }}" class="pen"
+           title="Rename this passkey" aria-label="Rename passkey {{ p.name or '' }}">✎</a></td>
       <td>{{ p.created }}</td>
       <td>{{ p.last_used or "–" }}</td>
+      {% endif %}
       <td>
         <form method="post" action="{{ url_for('admin.delete_passkey', key=p.key) }}">
           <input type="hidden" name="csrf" value="{{ csrf_token() }}">

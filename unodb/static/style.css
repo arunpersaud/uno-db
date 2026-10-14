@@ -342,3 +342,8 @@ tr.editing td {
 .confirm {
   border: 2px solid var(--pico-primary);
 }
+
+a.pen {
+  text-decoration: none;
+  margin-left: 0.3rem;
+}

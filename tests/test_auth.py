@@ -257,3 +257,33 @@ def test_audit_log(app):
             r[0] for r in get_db().execute("SELECT action FROM audit_log ORDER BY id")
         ]
     assert actions == ["user created", "invite created", "role changed"]
+
+
+def test_rename_passkey(app, client):
+    invite(app)
+    uid = user_id(app, "Arun")
+    with app.app_context():
+        get_db().execute(
+            "INSERT INTO credentials (id, user_id, public_key, sign_count, name)"
+            " VALUES (x'01', ?, x'00', 0, 'old')",
+            (uid,),
+        )
+    log_in(client, uid)
+    html = client.get("/admin/?rename=AQ").text
+    assert 'value="old"' in html
+    client.post(
+        "/admin/passkeys/AQ/rename", data={"csrf": "test-token", "name": " my  phone "}
+    )
+    with app.app_context():
+        assert (
+            get_db().execute("SELECT name FROM credentials").fetchone()[0] == "my phone"
+        )
+    assert "my phone" in client.get("/admin/").text
+
+    # someone else's passkey: not found
+    invite(app, "Eve Other", "contributor")
+    log_in(client, user_id(app, "Eve Other"))
+    response = client.post(
+        "/admin/passkeys/AQ/rename", data={"csrf": "test-token", "name": "x"}
+    )
+    assert response.status_code == 404
