@@ -88,6 +88,11 @@ def index():
     )
 
 
+@stats.route("/contribute")
+def contribute():
+    return render_template("contribute.html")
+
+
 @stats.route("/sessions")
 def sessions():
     rows = st.all_scores()

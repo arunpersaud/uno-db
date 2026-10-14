@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Add your own games – The UNO database{% endblock %}
+{% block content %}
+<h1>Add your own games</h1>
+
+<p>Do you keep score when you play UNO? You can add your games to this
+  database and get the same statistics and charts for your group.</p>
+
+<h2>How to get a login</h2>
+<ol>
+  {# email_off: Cloudflare would replace the address with a version that
+     needs its inline decoder script, which the CSP blocks #}
+  <li>Send an email to <!--email_off--><a href="mailto:arun@nubati.net?subject=UNO%20database%20login">arun@nubati.net</a><!--/email_off-->
+    and tell me a bit about your group.</li>
+  <li>You get a link back. It works once and only for a short time.</li>
+  <li>Open the link and set up a <strong>passkey</strong>: your phone or
+    computer saves it, and you unlock it with your fingerprint, face or
+    device PIN. There is no password to remember.</li>
+  <li>Log in with the passkey and enter your scores.</li>
+</ol>
+
+<h2>Before you enter games</h2>
+<ul>
+  <li><strong>Player names:</strong> use first and last name (e.g. "Joe
+    Miller"), so your players don't get mixed up with players of the same
+    first name who are already in the database.</li>
+  <li><strong>Game type:</strong> house rules differ. If yours differ from
+    the existing game types, create your own and describe the rules.</li>
+  <li>New sessions show up in the statistics after a quick check.</li>
+</ul>
+
+<p><small>Entering games is not open yet; this part of the site is still
+  being built.</small></p>
+{% endblock %}

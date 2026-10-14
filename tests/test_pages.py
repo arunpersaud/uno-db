@@ -6,7 +6,7 @@ import pytest
 
 @pytest.mark.parametrize(
     "url",
-    ["/", "/sessions", "/session/2004-05-28", "/players", "/player/ann"],
+    ["/", "/sessions", "/session/2004-05-28", "/players", "/player/ann", "/contribute"],
 )
 def test_pages(client, url):
     assert client.get(url).status_code == 200
