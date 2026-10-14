@@ -16,4 +16,6 @@
   {% endif %}
   {% endfor %}
 </div>
-<p><small>Points per player and game; a win counts as 0.</small></p>
+<p><small>Points per player and game; a win counts as 0.
+  How points are counted depends on the house rules: see the
+  <a href="{{ url_for('stats.variants') }}">game types and their rules</a>.</small></p>
