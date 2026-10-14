@@ -32,6 +32,7 @@ JOIN session ON session.id = games.session
 JOIN players ON players.id = scores.player
 LEFT JOIN locations ON locations.id = session.location_id
 LEFT JOIN variations ON variations.id = session.variation
+WHERE session.deleted IS NULL
 """
 CHRONOLOGICAL = " ORDER BY session.date, session.id, games.id, scores.position"
 
@@ -56,6 +57,7 @@ def summarize(scores: list[int]) -> dict:
 
 
 def all_scores(where: str = "", params: tuple | dict = ()) -> list:
+    """Scores of all sessions that aren't deleted; where: " AND ..." """
     return query(SCORES_SQL + where + CHRONOLOGICAL, params)
 
 

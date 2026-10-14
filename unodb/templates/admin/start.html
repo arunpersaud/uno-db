@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Admin – The UNO database{% endblock %}
+{% block head %}<meta name="csrf-token" content="{{ csrf_token() }}">{% endblock %}
+{% block content %}
+<hgroup>
+  <h1>Hello {{ current_user.name }}</h1>
+  <p>You are logged in as {{ current_user.role }}.</p>
+</hgroup>
+
+<article>
+  <header><strong>Before you enter games</strong></header>
+  <ul>
+    <li><strong>Player names:</strong> new players need first and last name
+      (e.g. "Joe Miller"), and a name can't be used twice. Pick an existing
+      player only if it really is the same person.</li>
+    <li><strong>Game type:</strong> pick the type with your rules. If your
+      house rules differ from all existing types, create a new type and
+      describe the rules.</li>
+    <li>Your sessions count in the statistics right away.
+      {% if current_user.role == "contributor" %}You can correct or delete the
+      sessions you entered.{% else %}As {{ current_user.role }} you can
+      correct or delete any session.{% endif %}</li>
+  </ul>
+</article>
+
+<p><strong>Entering games is not available yet</strong>; it's the next part
+  being built.</p>
+
+<h2>Your passkeys</h2>
+<div class="overflow-auto">
+<table>
+  <thead><tr><th>Name</th><th>Set up</th><th>Last used</th><th></th></tr></thead>
+  <tbody>
+    {% for p in passkeys %}
+    <tr>
+      <td>{{ p.name or "–" }}</td>
+      <td>{{ p.created }}</td>
+      <td>{{ p.last_used or "–" }}</td>
+      <td>
+        <form method="post" action="{{ url_for('admin.delete_passkey', key=p.key) }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button type="submit" class="secondary outline">Remove</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<details>
+  <summary>Add a passkey (e.g. for another device)</summary>
+  <label>Name for the new passkey (optional)
+    <input type="text" data-passkey-name placeholder="e.g. laptop" maxlength="60">
+  </label>
+  <button type="button" data-passkey="register">Add passkey</button>
+  <p class="error" role="alert" data-passkey-error hidden></p>
+</details>
+
+<form method="post" action="{{ url_for('admin.logout') }}">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <button type="submit" class="secondary">Log out</button>
+</form>
+{% endblock %}

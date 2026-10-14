@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Set up your passkey – The UNO database{% endblock %}
+{% block head %}{% if invite %}<meta name="csrf-token" content="{{ csrf_token() }}">{% endif %}{% endblock %}
+{% block content %}
+{% if invite %}
+<h1>Welcome, {{ invite.name }}</h1>
+<p>Set up a <strong>passkey</strong> to log in to the UNO database. Your phone
+  or computer stores it and unlocks it with your fingerprint, face or device
+  PIN. There is no password.</p>
+<p>This link works once. If you want to log in from several devices, add
+  more passkeys later on your start page.</p>
+<label>Name for this passkey (optional)
+  <input type="text" data-passkey-name placeholder="e.g. my phone" maxlength="60">
+</label>
+<button type="button" data-passkey="register" data-token="{{ token }}">Set up passkey</button>
+<p class="error" role="alert" data-passkey-error hidden></p>
+{% else %}
+<h1>This link doesn't work</h1>
+<p>The invite link was already used or has expired. Please ask for a new one
+  (see <a href="{{ url_for('stats.contribute') }}">Add your own games</a>).</p>
+{% endif %}
+{% endblock %}

@@ -14,6 +14,7 @@
   <!-- no inline styles or eval for htmx (CSP); scripts are loaded once below -->
   <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false, "historyCacheSize": 0}'>
   {% block css %}{% endblock %}
+  {% block head %}{% endblock %}
 </head>
 
 <body>
@@ -35,21 +36,27 @@
         <li><a href="{{ url_for('stats.sessions') }}">Sessions</a></li>
         <li><a href="{{ url_for('stats.compare') }}">Compare</a></li>
         <li><a href="/index.php">Old site</a></li>
+        {% if current_user %}<li><a href="{{ url_for('admin.start') }}">Admin</a></li>{% endif %}
       </ul>
     </nav>
   </header>
 
   <main class="container">
+    {% for message in get_flashed_messages() %}
+    <p class="flash" role="alert">{{ message }}</p>
+    {% endfor %}
     {% block content %}{% endblock %}
   </main>
 
   <footer class="container">
     <small><a href="{{ url_for('stats.contribute') }}">Add your own games</a> ·
+      {% if not current_user %}<a href="{{ url_for('admin.login') }}">Log in</a> ·{% endif %}
       Copyright 2003-2026 Arun Persaud. Code available on
       <a href="https://github.com/arunpersaud/uno-db">github</a>.</small>
   </footer>
   <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
   <script src="{{ url_for('static', filename='uPlot.iife.min.js') }}"></script>
   <script src="{{ url_for('static', filename='charts.js') }}"></script>
+  <script src="{{ url_for('static', filename='passkey.js') }}"></script>
 </body>
 </html>

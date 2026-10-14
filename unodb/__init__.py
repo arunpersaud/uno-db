@@ -3,16 +3,25 @@
 Configuration comes from environment variables with a FLASK_ prefix:
 
     FLASK_DATABASE     SQLite file (default: instance/uno.sqlite)
+    FLASK_SECRET_KEY   signs the login cookie
+    FLASK_ORIGIN       the site's address, e.g. https://uno.nubati.net;
+                       passkeys are bound to its host name
+
+FLASK_SECRET_KEY and FLASK_ORIGIN are required unless the app runs in
+debug or testing mode.
 """
 
 import hashlib
 import os
+from datetime import timedelta
 from functools import cache
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from flask import Flask, request
 
-from . import db, views
+from . import auth, db, views
+from .cli import uno
 
 # Everything is served from this site: no inline scripts or styles, no
 # CDNs. data: images are the icons inside pico.min.css.
@@ -43,6 +52,19 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.config.from_prefixed_env()
     if test_config:
         app.config.update(test_config)
+
+    defaults = {"SECRET_KEY": "insecure-dev-key", "ORIGIN": "http://localhost:5000"}
+    for key, value in defaults.items():
+        if not app.config.get(key):
+            if not (app.debug or app.testing):
+                raise RuntimeError(f"FLASK_{key} is not set")
+            app.config[key] = value
+    app.config["RP_ID"] = urlsplit(app.config["ORIGIN"]).hostname
+    app.config.update(
+        SESSION_COOKIE_SECURE=app.config["ORIGIN"].startswith("https://"),
+        SESSION_COOKIE_SAMESITE="Lax",
+        PERMANENT_SESSION_LIFETIME=timedelta(days=30),
+    )
 
     db.init_app(app)
 
@@ -75,5 +97,7 @@ def create_app(test_config: dict | None = None) -> Flask:
         return response
 
     app.register_blueprint(views.stats)
+    auth.init_app(app)
+    app.cli.add_command(uno)
 
     return app

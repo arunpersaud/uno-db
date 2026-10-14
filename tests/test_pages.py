@@ -119,18 +119,28 @@ def test_player_canonical_url(client, url):
     assert response.location in ("/player/ann", "/player/cy-young")
 
 
-def test_database_is_read_only(app):
+def test_public_pages_are_read_only(app):
     from unodb.db import get_db
 
-    with app.app_context(), pytest.raises(Exception, match="readonly"):
-        get_db().execute("DELETE FROM players")
+    with app.test_request_context("/"):
+        app.preprocess_request()
+        with pytest.raises(Exception, match="readonly"):
+            get_db().execute("DELETE FROM players")
 
 
 def test_missing_database(tmp_path):
     from unodb import create_app
 
     with pytest.raises(RuntimeError, match="not found"):
-        create_app({"DATABASE": tmp_path / "nope.sqlite"})
+        create_app({"TESTING": True, "DATABASE": tmp_path / "nope.sqlite"})
+
+
+def test_secret_key_required_in_production(database, monkeypatch):
+    from unodb import create_app
+
+    monkeypatch.delenv("FLASK_SECRET_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="FLASK_SECRET_KEY"):
+        create_app({"DATABASE": database})
 
 
 def test_security_headers(client):

@@ -303,3 +303,9 @@ table.correlation tbody th {
   text-align: left;
   white-space: nowrap;
 }
+
+.flash {
+  padding: var(--pico-spacing);
+  border-radius: var(--pico-border-radius);
+  background-color: var(--pico-mark-background-color);
+}

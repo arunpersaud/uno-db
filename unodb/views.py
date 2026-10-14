@@ -12,9 +12,11 @@ from flask import (
 )
 
 from . import stats as st
-from .db import WINNER, query, query_one
+from .db import WINNER, query, read_only
 
 stats = Blueprint("stats", __name__)
+# public pages never write
+stats.before_request(read_only)
 
 SESSION_COLUMNS = {
     "date": True,
@@ -60,20 +62,18 @@ def index():
     # old links like /?name=Arun: the PHP site still has those pages
     if request.query_string:
         return redirect("/index.php?" + request.query_string.decode())
-    totals = query_one(
-        """SELECT (SELECT count(*) FROM games) AS games,
-                  (SELECT count(*) FROM session) AS sessions,
-                  (SELECT count(DISTINCT player) FROM scores) AS players,
-                  (SELECT min(date) FROM session
-                   WHERE date GLOB '[12][0-9][0-9][0-9]-*') AS first,
-                  (SELECT max(date) FROM session) AS last"""
-    )
     rows = st.all_scores()
     session_list = st.sessions(rows)
+    dates = sorted({row["date"] for row in rows})
+    known = [d for d in dates if st.timestamp(d, 0) is not None]
+    totals = {
+        "players": len({row["player"] for row in rows}),
+        "first": known[0] if known else None,
+        "last": dates[-1] if dates else None,
+    }
 
     # active players: everyone who played in the last year with games
-    since = query_one("SELECT date(max(date), '-1 year') AS since FROM session")
-    since = since["since"]
+    since = f"{int(known[-1][:4]) - 1}{known[-1][4:]}" if known else ""
     active = st.players([row for row in rows if row["date"] >= since])
     active.sort(key=lambda p: (-p["games"], p["name"]))
 
@@ -109,7 +109,7 @@ def sessions():
 @stats.route("/session/<date>")
 def session(date):
     """All sessions of one day (sometimes there are several)."""
-    rows = st.all_scores(" WHERE session.date = ?", (date,))
+    rows = st.all_scores(" AND session.date = ?", (date,))
     if not rows:
         abort(404)
     session_list = st.sessions(rows)
@@ -192,7 +192,7 @@ def player(name):
     row, response = find_player(name)
     if response:
         return response
-    data = st.player(st.all_scores(" WHERE scores.player = ?", (row["id"],)))
+    data = st.player(st.all_scores(" AND scores.player = ?", (row["id"],)))
     sort = st.Sort(SESSION_COLUMNS | {"wins": True}, "date")
     by_date = request.args.get("x") == "date"
     return render_template(
@@ -212,7 +212,7 @@ def player_charts(name):
     row, response = find_player(name)
     if response:
         return response
-    rows = st.all_scores(" WHERE scores.player = ?", (row["id"],))
+    rows = st.all_scores(" AND scores.player = ?", (row["id"],))
     return jsonify(st.player_charts(rows, by_date=request.args.get("x") == "date"))
 
 
@@ -273,7 +273,7 @@ def compare(names=""):
     data = None
     if len(players) >= 2:
         player_rows = [
-            (p["name"], st.all_scores(" WHERE scores.player = ?", (p["id"],)))
+            (p["name"], st.all_scores(" AND scores.player = ?", (p["id"],)))
             for p in players
         ]
         data = st.compare(player_rows)
@@ -308,7 +308,7 @@ def compare_charts(names):
     if not 2 <= len(selected) <= MAX_COMPARE or any(s not in known for s in selected):
         abort(404)
     players = [
-        (known[s]["name"], st.all_scores(" WHERE scores.player = ?", (known[s]["id"],)))
+        (known[s]["name"], st.all_scores(" AND scores.player = ?", (known[s]["id"],)))
         for s in selected
     ]
     together = request.args.get("games") == "together"
