@@ -12,7 +12,7 @@
   streak.</p>
 
 {% set url = url_for('stats.ratings_page') %}
-<form class="options" method="get" action="{{ url }}" {{ htmx_attrs(url) }} hx-trigger="change">
+<form class="options" method="get" action="{{ url }}" {{ htmx_attrs(url) }} data-hx-trigger="change">
   {% for key, value in request.args.items(multi=true) if key != "losers" %}
   <input type="hidden" name="{{ key }}" value="{{ value }}">
   {% endfor %}

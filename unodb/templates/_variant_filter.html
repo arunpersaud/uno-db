@@ -2,8 +2,8 @@
 {% set picked = g.variants|map(attribute="short")|list %}
 <details class="variant-filter" {{ "open" if picked }}>
   <summary>Game types: {{ g.variants|map(attribute="name")|join(", ") if picked else "all" }}</summary>
-  <form method="get" action="{{ request.path }}" hx-get="{{ request.path }}" hx-trigger="change"
-        hx-target="main" hx-select="main" hx-swap="outerHTML show:none" hx-push-url="true">
+  <form method="get" action="{{ request.path }}" data-hx-get="{{ request.path }}" data-hx-trigger="change"
+        data-hx-target="main" data-hx-select="main" data-hx-swap="outerHTML show:none" data-hx-push-url="true">
     {% for key, value in request.args.items(multi=true) if key != "variant" %}
     <input type="hidden" name="{{ key }}" value="{{ value }}">
     {% endfor %}

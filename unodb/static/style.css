@@ -355,3 +355,21 @@ a.pen {
 .variant-filter label {
   display: block;
 }
+
+/* headings inside the small stat cards look like the old header text */
+article > header > h2,
+article > header > h3 {
+  font-size: 1rem;
+  font-weight: normal;
+  margin-bottom: 0;
+}
+
+/* for screen readers only */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

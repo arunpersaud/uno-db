@@ -8,7 +8,7 @@
   {% set r = records[key] %}
   {% if r %}
   <article>
-    <header>{{ title }}</header>
+    <header><h3>{{ title }}</h3></header>
     <p class="hero">{{ r.average|number }}</p>
     <p>points per player{{ " and game" if "session" in key }},
       {{ link(r) }}, {{ r.location }}</p>

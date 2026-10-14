@@ -15,7 +15,7 @@
     </label>
   </div>
   <label>Game type
-    <select name="variant" required>
+    <select name="variant">
       {% for v in variants %}
       <option value="{{ v.id }}" {{ "selected" if v.id == values.variant }}>{{ v.name }}</option>
       {% endfor %}

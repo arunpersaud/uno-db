@@ -17,7 +17,7 @@
 
 {# swaps only <main> via htmx and updates the address bar; plain GET without JS #}
 {% macro htmx_attrs(url) -%}
-hx-get="{{ url }}" hx-target="main" hx-select="main" hx-swap="outerHTML show:none" hx-push-url="true"
+data-hx-get="{{ url }}" data-hx-target="main" data-hx-select="main" data-hx-swap="outerHTML show:none" data-hx-push-url="true"
 {%- endmacro %}
 
 {% macro swatch(i) -%}
@@ -26,7 +26,7 @@ hx-get="{{ url }}" hx-target="main" hx-select="main" hx-swap="outerHTML show:non
 
 {# chart options, applied as soon as a switch changes #}
 {% macro chart_switches(url, keep, together=false) -%}
-<form class="options" method="get" action="{{ url }}" {{ htmx_attrs(url) }} hx-trigger="change">
+<form class="options" method="get" action="{{ url }}" {{ htmx_attrs(url) }} data-hx-trigger="change">
   {% if together %}
   <label><input type="checkbox" role="switch" name="games" value="together"
     {{ "checked" if keep.games }}> Only games they all played together</label>

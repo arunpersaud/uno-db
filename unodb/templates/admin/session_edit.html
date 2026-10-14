@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block title %}{{ session.date }} – Admin – The UNO database{% endblock %}
 {% block content %}
-<div id="entry" hx-boost="true" hx-target="#entry" hx-select="#entry"
-     hx-swap="outerHTML show:none" hx-push-url="false">
+<div id="entry" data-hx-boost="true" data-hx-target="#entry" data-hx-select="#entry"
+     data-hx-swap="outerHTML show:none" data-hx-push-url="false">
 <hgroup>
   <h1>{{ session.date }}, {{ info.location }}</h1>
   <p>{{ info.variant }} · {{ games|length }} games ·
-    <a href="{{ url_for('stats.session', date=session.date) }}" hx-boost="false">public page</a></p>
+    <a href="{{ url_for('stats.session', date=session.date) }}" data-hx-boost="false">public page</a></p>
 </hgroup>
 {% include "admin/_problems.html" %}
 
@@ -91,7 +91,7 @@
   <summary>Delete this session</summary>
   <p>The session and its games disappear from the statistics. An admin can
     bring it back.</p>
-  <form method="post" action="{{ url_for('admin.delete_session', session_id=session.id) }}" hx-boost="false">
+  <form method="post" action="{{ url_for('admin.delete_session', session_id=session.id) }}" data-hx-boost="false">
     <input type="hidden" name="csrf" value="{{ csrf_token() }}">
     <button type="submit" class="secondary">Delete session</button>
   </form>

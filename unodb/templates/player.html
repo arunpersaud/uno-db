@@ -9,22 +9,22 @@
 </hgroup>
 
 <div class="grid stats">
-  <article><header>Wins</header>
+  <article><header><h3>Wins</h3></header>
     <p class="hero">{{ summary.wins }}</p>
     <p>{{ summary.win_rate|percent }} of the games,
       <span title="Wins compared to chance: with N players you'd win 1 in N games">{{ summary.win_ratio|ratio }} chance</span></p></article>
-  <article><header>Points per game</header>
+  <article><header><h3>Points per game</h3></header>
     <p class="hero">{{ summary.average|number }}</p>
     <p>σ {{ summary.sigma|number }}, {{ summary.points }} points in total</p></article>
-  <article><header>Longest winning streak</header>
+  <article><header><h3>Longest winning streak</h3></header>
     <p class="hero">{{ summary.streak }}</p>
     <p>games in a row</p></article>
   {% if rating %}
-  <article><header>Rating</header>
+  <article><header><h3>Rating</h3></header>
     <p class="hero">{{ rating.rating|number }}</p>
     <p><a href="{{ url_for('stats.ratings_page') }}">#{{ rating.rank }} of {{ rating.of }}</a> players</p></article>
   {% endif %}
-  <article><header>Most points in one game</header>
+  <article><header><h3>Most points in one game</h3></header>
     <p class="hero">{{ summary.highest }}</p>
     <p>{{ summary.black }} games ended with a black card</p></article>
 </div>
