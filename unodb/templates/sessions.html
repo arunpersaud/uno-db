@@ -5,4 +5,7 @@
 {% include "_records.html" %}
 <p>Click a column header to sort.</p>
 {% include "_sessions_table.html" %}
+<p class="download">Download as CSV: <a href="{{ url_for('stats.sessions_csv') }}" download>this list</a> ·
+  <a href="{{ url_for('stats.scores_csv') }}" download>all scores</a>
+  <small>(one row per player and game)</small></p>
 {% endblock %}

@@ -54,4 +54,6 @@
 </div>
 </section>
 {% endfor %}
+<p class="download"><a href="{{ url_for('stats.session_csv', date=date) }}" download>Download as CSV</a>
+  <small>(one row per player and game)</small></p>
 {% endblock %}

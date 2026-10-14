@@ -12,25 +12,13 @@ from flask import (
     url_for,
 )
 
-from . import markdown
+from . import export, markdown
 from . import stats as st
 from .db import WINNER, query, query_one, read_only
 
 stats = Blueprint("stats", __name__)
 # public pages never write
 stats.before_request(read_only)
-
-# query parameters of the old PHP site (index.php)
-OLD_PARAMETERS = {
-    "name",
-    "total",
-    "games",
-    "lowest",
-    "highest",
-    "allplayers",
-    "mingames",
-    "groupsize",
-}
 
 # pages without the game type filter
 UNFILTERED = {"stats.contribute", "stats.variants", "stats.variant"}
@@ -112,9 +100,6 @@ def newest_first(session_list: list[dict]) -> list[dict]:
 
 @stats.route("/")
 def index():
-    # old links like /?name=Arun: the PHP site still has those pages
-    if OLD_PARAMETERS & request.args.keys():
-        return redirect("/index.php?" + request.query_string.decode())
     rows = st.all_scores()
     session_list = st.sessions(rows)
     dates = sorted({row["date"] for row in rows})
@@ -396,3 +381,66 @@ def compare_charts(names):
     together = request.args.get("games") == "together"
     by_date = request.args.get("x") == "date"
     return jsonify(st.compare_charts(players, together, by_date))
+
+
+# --- CSV downloads -------------------------------------------------------------
+
+
+@stats.route("/session/<date>.csv")
+def session_csv(date):
+    rows = st.all_scores(" AND session.date = ?", (date,))
+    if not rows:
+        abort(404)
+    return export.csv_response(
+        f"uno-{date}.csv", export.SCORE_HEADER, export.score_rows(rows)
+    )
+
+
+@stats.route("/scores.csv")
+def scores_csv():
+    """All scores (of the picked game types)."""
+    return export.csv_response(
+        "uno-scores.csv", export.SCORE_HEADER, export.score_rows(st.all_scores())
+    )
+
+
+SESSION_HEADER = [
+    "date",
+    "location",
+    "game_type",
+    "players",
+    "games",
+    "points_per_game",
+]
+
+
+@stats.route("/sessions.csv")
+def sessions_csv():
+    rows = newest_first(st.sessions(st.all_scores()))
+    return export.csv_response(
+        "uno-sessions.csv",
+        SESSION_HEADER,
+        (
+            [s["date"], s["location"], s["variation"], s["number_of_players"],
+             s["games"], round(s["average"], 2)]
+            for s in rows
+        ),
+    )  # fmt: skip
+
+
+@stats.route("/player/<name>/sessions.csv")
+def player_sessions_csv(name):
+    row, response = find_player(name)
+    if response:
+        return response
+    data = st.player(st.all_scores(" AND scores.player = ?", (row["id"],)))
+    return export.csv_response(
+        f"uno-{slug(row['name'])}-sessions.csv",
+        ["date", "location", "game_type", "players", "games", "wins", "points",
+         "points_per_game"],
+        (
+            [s["date"], s["location"], s["variation"], s["number_of_players"],
+             s["games"], s["wins"], s["points"], round(s["average"], 2)]
+            for s in newest_first(data["sessions"])
+        ),
+    )  # fmt: skip

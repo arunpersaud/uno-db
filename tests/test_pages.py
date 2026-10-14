@@ -173,12 +173,6 @@ def test_no_inline_code(template):
     assert not re.search(r"\son[a-z]+=", html)
 
 
-def test_old_links_go_to_php(client):
-    response = client.get("/?name=Arun&mingames=0")
-    assert response.status_code == 302
-    assert response.location == "/index.php?name=Arun&mingames=0"
-
-
 def test_compare_empty(client):
     html = client.get("/compare/").text
     assert "Pick at least two players" in html
@@ -306,3 +300,39 @@ def test_compare_correlation_scatter(client):
     assert '<svg class="scatter"' in html
     assert html.count('r="3"></circle>') == 3
     assert "Correlation r = 0.85" in html
+
+
+def test_csv_exports(client):
+    response = client.get("/session/2004-06-01.csv")
+    assert response.mimetype == "text/csv"
+    assert 'filename="uno-2004-06-01.csv"' in response.headers["Content-Disposition"]
+    lines = response.text.strip().splitlines()
+    assert lines[0] == (
+        "date,location,game_type,session,game,player,seat,points,won,black_card"
+    )
+    # two sessions that day, one game each; Ann won game 1 of session 2
+    assert "2004-06-01,Berkeley,Uno default,2,1,Ann,1,0,1,0" in lines
+    assert "2004-06-01,Lodi,Uno default,3,1,Cy Young,2,20,0,0" in lines
+
+    lines = client.get("/scores.csv").text.strip().splitlines()
+    assert len(lines) == 1 + 10
+    # session 1 has two games
+    assert "2004-05-28,Berkeley,Uno default,1,2,Cy Young,3,50,0,1" in lines
+
+    lines = client.get("/sessions.csv").text.strip().splitlines()
+    assert lines[1] == "2004-06-01,Lodi,Uno default,2,1,10.0"
+
+    lines = client.get("/player/cy-young/sessions.csv").text.strip().splitlines()
+    assert lines[-1] == "2004-05-28,Berkeley,Uno default,3,2,0,80,40.0"
+
+    assert client.get("/session/1999-01-01.csv").status_code == 404
+    assert 'href="/session/2004-06-01.csv' in client.get("/session/2004-06-01").text
+
+
+def test_csv_formula_injection():
+    from unodb.export import cell
+
+    assert cell("=HYPERLINK(1)") == "'=HYPERLINK(1)"
+    assert cell("-2+3") == "'-2+3"
+    assert cell("Joe") == "Joe"
+    assert cell(-5) == -5
