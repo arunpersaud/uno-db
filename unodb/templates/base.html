@@ -17,7 +17,15 @@
   <header class="container">
     <nav>
       <ul>
-        <li><a href="{{ url_for('stats.index') }}" class="brand"><img src="{{ url_for('static', filename='draw4.png') }}" alt="" width="19" height="30"><strong>The UNO database</strong></a></li>
+        <li>
+          <a href="{{ url_for('stats.index') }}" class="brand">
+            <img src="{{ url_for('static', filename='draw4.png') }}" alt="" width="38" height="60">
+            <span>
+              <strong>The UNO database</strong>
+              <small>All the game statistics you need</small>
+            </span>
+          </a>
+        </li>
       </ul>
       <ul>
         <li><a href="{{ url_for('stats.players') }}">Players</a></li>

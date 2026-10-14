@@ -61,12 +61,28 @@ tr:target td {
   color: var(--pico-muted-color);
 }
 
-.brand img {
-  vertical-align: middle;
-  margin-right: 0.5rem;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
 }
 
-.masthead h1 img {
-  vertical-align: middle;
-  margin-right: 0.75rem;
+.brand span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.brand strong {
+  font-size: 1.5rem;
+}
+
+.brand small {
+  color: var(--pico-muted-color);
+}
+
+/* on phones the links go below the title instead of overflowing */
+header nav {
+  flex-wrap: wrap;
 }

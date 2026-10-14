@@ -78,7 +78,7 @@ def index():
         "index.html",
         totals=totals,
         recent=newest_first(session_list)[:10],
-        active=active,
+        active=active[:10],
         since=since,
         overview=st.overview(rows),
         records=st.records(session_list, st.games(rows)),
