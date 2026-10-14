@@ -6,11 +6,11 @@
   <tbody>
     {% for s in sessions %}
     <tr>
-      <td><a href="{{ url_for('stats.session', session_id=s.id) }}">{{ s.date }}</a></td>
+      <td><a href="{{ url_for('stats.session', date=s.date) }}">{{ s.date }}</a></td>
       <td>{{ s.location }}</td>
       <td>{{ s.number_of_players }}</td>
       <td>{{ s.games }}</td>
-      <td>{{ s.variation }}</td>
+      <td>{{ s.variation_short }}</td>
     </tr>
     {% endfor %}
   </tbody>

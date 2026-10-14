@@ -1,9 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Session {{ info.date }} – UNO statistics{% endblock %}
+{% block title %}{{ date }} – UNO statistics{% endblock %}
 {% block content %}
+<h1>{{ date }}</h1>
+
+{% for info, table in sessions %}
+<section>
 <hgroup>
-  <h1>Session {{ info.date }}</h1>
-  <p>{{ info.location }} · {{ info.variation }} · {{ games|length }} games</p>
+  <h2>{{ info.location }}</h2>
+  <p>{{ info.variation }} · {{ table.games|length }} games</p>
 </hgroup>
 
 <div class="overflow-auto">
@@ -11,15 +15,17 @@
   <thead>
     <tr>
       <th>Game</th>
-      {% for name in players.values() %}<th>{{ name }}</th>{% endfor %}
+      {% for name in table.players.values() %}
+      <th><a href="{{ url_for('stats.player', name=name|slug) }}">{{ name }}</a></th>
+      {% endfor %}
       <th>Black card</th>
     </tr>
   </thead>
   <tbody>
-    {% for game in games %}
+    {% for game in table.games %}
     <tr>
       <td>{{ loop.index }}</td>
-      {% for player in players %}
+      {% for player in table.players %}
       {% set score = game.scores.get(player) %}
       {% if score == winner %}<td class="winner">won</td>
       {% elif score is none %}<td></td>
@@ -32,15 +38,17 @@
   <tfoot>
     <tr>
       <th>Total</th>
-      {% for player in players %}<th>{{ totals[player] }}</th>{% endfor %}
+      {% for player in table.players %}<th>{{ table.totals[player] }}</th>{% endfor %}
       <th></th>
     </tr>
     <tr>
       <th>Wins</th>
-      {% for player in players %}<th>{{ wins[player] }}</th>{% endfor %}
+      {% for player in table.players %}<th>{{ table.wins[player] }}</th>{% endfor %}
       <th></th>
     </tr>
   </tfoot>
 </table>
 </div>
+</section>
+{% endfor %}
 {% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ name }} – UNO statistics{% endblock %}
+{% block content %}
+<hgroup>
+  <h1>{{ name }}</h1>
+  <p>{{ summary.games }} games, {{ summary.wins }} wins
+    ({{ "%.1f"|format(100 * summary.win_rate) }}%),
+    {{ "%.1f"|format(summary.average) }} points per game (a win counts as 0)</p>
+</hgroup>
+
+<p><a href="/index.php?name={{ name|urlencode }}">Statistics and charts on the old site</a></p>
+
+<h2>Sessions</h2>
+<div class="overflow-auto">
+<table class="striped">
+  <thead>
+    <tr><th>Date</th><th>Location</th><th>Games</th><th>Wins</th><th>Points</th></tr>
+  </thead>
+  <tbody>
+    {% for s in sessions %}
+    <tr>
+      <td><a href="{{ url_for('stats.session', date=s.date) }}">{{ s.date }}</a></td>
+      <td>{{ s.location }}</td>
+      <td>{{ s.games }}</td>
+      <td>{{ s.wins }}</td>
+      <td>{{ s.points }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

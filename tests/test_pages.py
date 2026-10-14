@@ -4,28 +4,65 @@ from pathlib import Path
 import pytest
 
 
-@pytest.mark.parametrize("url", ["/", "/sessions", "/sessions/1"])
+@pytest.mark.parametrize(
+    "url", ["/", "/sessions", "/session/2004-05-28", "/players", "/player/ann"]
+)
 def test_pages(client, url):
     assert client.get(url).status_code == 200
 
 
 def test_index(client):
     html = client.get("/").text
-    assert "3 games in 2 sessions with" in html
+    assert "4 games in 3 sessions with" in html
     assert "2004-05-28 to 2004-06-01" in html
 
 
 def test_session(client):
-    html = client.get("/sessions/1").text
+    html = client.get("/session/2004-05-28").text
     # columns in seating order, totals without the winner rows
-    assert re.search(r"<th>Ann</th>\s*<th>Bob</th>\s*<th>Cy</th>", html)
+    names = re.findall(r'<th><a href="/player/([a-z-]+)">([^<]+)</a></th>', html)
+    assert names == [("ann", "Ann"), ("bob", "Bob"), ("cy-young", "Cy Young")]
     assert re.search(r"<th>Total</th>\s*<th>5</th>\s*<th>12</th>\s*<th>80</th>", html)
     assert re.search(r"<th>Wins</th>\s*<th>1</th>\s*<th>1</th>\s*<th>0</th>", html)
     assert html.count('class="winner"') == 2
 
 
-def test_unknown_session(client):
-    assert client.get("/sessions/99").status_code == 404
+def test_sessions_on_the_same_day(client):
+    html = client.get("/session/2004-06-01").text
+    assert html.count("<table") == 2
+    assert "<h2>Berkeley</h2>" in html
+    assert "<h2>Lodi</h2>" in html
+
+
+@pytest.mark.parametrize("url", ["/session/1999-01-01", "/player/nobody"])
+def test_not_found(client, url):
+    assert client.get(url).status_code == 404
+
+
+def test_players(client):
+    html = client.get("/players").text
+    rows = re.findall(
+        r'<a href="/player/[a-z-]+">([^<]+)</a></td>\s*'
+        r"<td>(\d+)</td>\s*<td>(\d+)</td>",
+        html,
+    )
+    assert rows == [("Cy Young", "4", "0"), ("Ann", "3", "2"), ("Bob", "3", "2")]
+
+
+def test_player(client):
+    html = client.get("/player/cy-young").text
+    assert "<h1>Cy Young</h1>" in html
+    assert "4 games, 0 wins" in html
+    assert "26.8 points per game" in html
+
+
+@pytest.mark.parametrize(
+    "url", ["/player/Ann", "/player/Cy%20Young", "/player/CY-young"]
+)
+def test_player_canonical_url(client, url):
+    response = client.get(url)
+    assert response.status_code == 301
+    assert response.location in ("/player/ann", "/player/cy-young")
 
 
 def test_database_is_read_only(app):
@@ -55,7 +92,7 @@ def test_escaping(app, database):
 
     with sqlite3.connect(database) as db:
         db.execute("UPDATE players SET name = '<b>Ann</b>' WHERE id = 1")
-    html = app.test_client().get("/sessions/1").text
+    html = app.test_client().get("/session/2004-05-28").text
     assert "&lt;b&gt;Ann&lt;/b&gt;" in html
 
 
