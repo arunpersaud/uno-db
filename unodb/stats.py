@@ -262,34 +262,47 @@ def day_numbers(rows) -> dict[int, int]:
 BREAK_AFTER = 365 * 24 * 3600
 
 
-def time_series(players_rows: list[list], nr: dict) -> dict:
-    """Moving averages over time for several players, on one shared x axis.
+def with_breaks(values: list[dict]) -> dict:
+    """Several series {time: value} on one shared x axis.
 
-    In each series, None means "no game of this player at that time" (the
-    chart connects across) except at the indices in "breaks", where the
-    player paused for more than BREAK_AFTER (the chart leaves a gap there).
-    Games without a usable date are left out.
+    In each series, None means "no value of this player at that time" (the
+    chart connects across) except at the indices in "breaks": every point of
+    the x axis inside a pause of that player longer than BREAK_AFTER (the
+    chart leaves a gap there; uPlot only gaps up to the next x value, so the
+    whole pause is marked).
     """
-    values = []
     pauses = []
-    for rows in players_rows:
-        moving = moving_average(rows)
-        v = {
-            t: m
-            for row, m in zip(rows, moving, strict=True)
-            if (t := timestamp(row["date"], nr[row["game"]])) is not None
-        }
+    for v in values:
         times = sorted(v)
-        # one second after the last game before the pause
-        pauses.append({a + 1 for a, b in pairwise(times) if b - a > BREAK_AFTER})
-        values.append(v)
-    x = sorted(set().union(*values, *pauses))
-    index = {t: i for i, t in enumerate(x)}
+        # one second after the last game: the pause has at least one point
+        pauses.append([(a, b) for a, b in pairwise(times) if b - a > BREAK_AFTER])
+    x = sorted(set().union(*values, *({a + 1 for a, _ in p} for p in pauses)))
+    breaks = [
+        [i for i, t in enumerate(x) if any(a < t < b for a, b in p)] for p in pauses
+    ]
     return {
         "x": x,
         "series": [[v.get(t) for t in x] for v in values],
-        "breaks": [sorted(index[t] for t in p) for p in pauses],
+        "breaks": breaks,
     }
+
+
+def time_series(players_rows: list[list], nr: dict) -> dict:
+    """Moving averages over time for several players (see with_breaks).
+
+    Games without a usable date are left out.
+    """
+    values = []
+    for rows in players_rows:
+        moving = moving_average(rows)
+        values.append(
+            {
+                t: m
+                for row, m in zip(rows, moving, strict=True)
+                if (t := timestamp(row["date"], nr[row["game"]])) is not None
+            }
+        )
+    return with_breaks(values)
 
 
 def player_charts(rows, by_date: bool = False) -> dict:

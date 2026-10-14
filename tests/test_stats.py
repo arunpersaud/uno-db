@@ -120,3 +120,16 @@ def test_win_ratio():
     s = stats.summarize_rows(rows)
     assert s["expected_wins"] == pytest.approx(1.25)
     assert s["win_ratio"] == pytest.approx(1.6)
+
+
+def test_breaks_cover_the_whole_pause():
+    year = 365 * 24 * 3600
+    a = {0: 1.0, 10: 2.0, 3 * year: 3.0}  # pause of almost 3 years
+    b = {5: 1.0, year: 2.0, 2 * year: 2.5, 3 * year: 3.0}  # plays in between
+    data = stats.with_breaks([a, b])
+    x = data["x"]
+    assert x == [0, 5, 10, 11, year, 2 * year, 3 * year]
+    # a: every point between its game at 10 and the one 3 years later
+    assert [x[i] for i in data["breaks"][0]] == [11, year, 2 * year]
+    assert data["breaks"][1] == []
+    assert data["series"][0] == [1.0, None, 2.0, None, None, None, 3.0]

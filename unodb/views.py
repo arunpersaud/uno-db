@@ -430,30 +430,17 @@ def ratings_chart():
     result = ratings.cached(rows, rating_mode())
     top = ratings.table(result, RATING_MIN_GAMES)[:RATING_CHART_PLAYERS]
     nr = st.day_numbers(rows)
-    values, pauses = [], []
+    values = []
     for player in top:
-        v = {}
-        for date, game, rating in result.history[player["player"]]:
-            t = st.timestamp(date, nr[game])
-            if t is not None:
-                v[t] = round(rating, 2)
-        times = sorted(v)
-        pauses.append(
+        values.append(
             {
-                a + 1
-                for a, b in zip(times, times[1:], strict=False)
-                if b - a > st.BREAK_AFTER
+                t: round(rating, 2)
+                for date, game, rating in result.history[player["player"]]
+                if (t := st.timestamp(date, nr[game])) is not None
             }
         )
-        values.append(v)
-    x = sorted(set().union(*values, *pauses))
-    index = {t: i for i, t in enumerate(x)}
     return jsonify(
-        names=[p["name"] for p in top],
-        x=x,
-        series=[[v.get(t) for t in x] for v in values],
-        breaks=[sorted(index[t] for t in p) for p in pauses],
-        by_date=True,
+        names=[p["name"] for p in top], by_date=True, **st.with_breaks(values)
     )
 
 
