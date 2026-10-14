@@ -25,8 +25,9 @@
     <p>games in a row</p></article>
   {% if rating %}
   <article><header><h3>Rating</h3></header>
-    <p class="hero">{{ rating.rating|number }}</p>
-    <p><a href="{{ url_for('stats.ratings_page') }}">#{{ rating.rank }} of {{ rating.of }}</a> players</p></article>
+    <p class="hero">{{ "%+.1f"|format(rating.rating) }}</p>
+    <p>points per game better than the table,
+      <a href="{{ url_for('stats.ratings_page') }}">#{{ rating.place }} of {{ rating.of }}</a></p></article>
   {% endif %}
   <article><header><h3>Most points in one game</h3></header>
     <p class="hero">{{ summary.highest }}</p>

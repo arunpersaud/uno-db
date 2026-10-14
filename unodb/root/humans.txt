@@ -7,5 +7,5 @@ From: Berkeley, California
 Everyone who played and kept score since 2003.
 
 /* SITE */
-Software: Python, Flask, Jinja, SQLite, htmx, uPlot, Pico CSS, openskill
+Software: Python, Flask, Jinja, SQLite, htmx, uPlot, Pico CSS
 Code: https://github.com/arunpersaud/uno-db

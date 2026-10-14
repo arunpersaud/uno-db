@@ -1,102 +1,50 @@
 {% extends "base.html" %}
-{% from "_macros.html" import swatch, htmx_attrs, th %}
+{% from "_macros.html" import swatch, th %}
 {% block title %}Ratings – The UNO database{% endblock %}
 {% block content %}
 <h1>Ratings</h1>
-<p>A skill rating like the ones for chess or online games (<a
-  href="https://openskill.me/">openskill</a>, similar to TrueSkill). All
-  games are replayed in order; winning against strong players raises the
-  rating more than winning against weak ones, and a win at a big table
-  counts more than at a small one. The rating shown is a careful estimate
-  (μ − 3σ): it only gets high with many good games, not with a lucky
-  streak.</p>
-
-{% set url = url_for('stats.ratings_page') %}
-<form class="options" method="get" action="{{ url }}" {{ htmx_attrs(url) }} data-hx-trigger="change">
-  {% for key, value in request.args.items(multi=true) if key != "losers" %}
-  <input type="hidden" name="{{ key }}" value="{{ value }}">
-  {% endfor %}
-  <label><input type="checkbox" role="switch" name="losers" value="points"
-    {{ "checked" if mode == "points" }}> Rank the other players by their
-    points (off: only the win counts)</label>
-  <noscript><button type="submit">Apply</button></noscript>
-</form>
+<p>The rating is how many points per game a player does better than the
+  others at the same table (fewer points is better, so +2 means 2 points per
+  game fewer than the others). Black-card games count half, since their
+  scores are doubled.</p>
+<p>A single game is mostly luck: points vary by about ±30 from game to game,
+  while the real differences between players are only a few points. So the
+  rating doesn't take the plain average: it pulls the average toward 0 the
+  fewer games someone has, because over a few games chance alone gives big
+  values. With hundreds of games the rating gets close to the average.</p>
 
 <div class="overflow-auto">
 <table class="striped numbers">
   <thead>
     <tr><th>#</th>{{ th(sort, "name", "Player", "text") }}{{ th(sort, "rating", "Rating") }}
-      <th>μ ± σ</th>{{ th(sort, "games", "Games") }}{{ th(sort, "win_ratio", "Wins vs. chance") }}
-      {{ th(sort, "vs_table_average", "Points vs. table") }}</tr>
+      {{ th(sort, "games", "Games") }}{{ th(sort, "average", "Average") }}
+      {{ th(sort, "win_ratio", "Wins vs. chance") }}</tr>
   </thead>
   <tbody>
     {% for p in table %}
+    {% set clear = p.rating - p.ci > 0 or p.rating + p.ci < 0 %}
     <tr>
-      <td>{% if p.rank <= chart_players %}{{ swatch(p.rank) }} {% endif %}{{ p.rank }}</td>
+      <td>{% if p.place <= chart_players %}{{ swatch(p.place) }} {% endif %}{{ p.place }}</td>
       <td class="text"><a href="{{ url_for('stats.player', name=p.name|slug) }}">{{ p.name }}</a></td>
-      <td><strong>{{ p.rating|number }}</strong></td>
-      <td>{{ p.mu|number }} ± {{ p.sigma|number }}</td>
+      <td class="{{ ('better-1' if p.rating > 0 else 'worse-1') if clear }}">
+        <strong>{{ "%+.1f"|format(p.rating) }}</strong> ± {{ "%.1f"|format(p.ci) }}</td>
       <td>{{ p.games }}</td>
+      <td>{{ "%+.1f"|format(p.average) }}</td>
       <td>{{ p.win_ratio|ratio }}</td>
-      <td class="{{ 'better-1' if p.vs_table_ci is not none and p.vs_table_average + p.vs_table_ci < 0
-                    else ('worse-1' if p.vs_table_ci is not none and p.vs_table_average - p.vs_table_ci > 0) }}">
-        {%- if p.vs_table_average is not none %}{{ "%+.1f"|format(p.vs_table_average) }}
-        {%- if p.vs_table_ci is not none %} ± {{ "%.1f"|format(p.vs_table_ci) }}{% endif %}{% else %}–{% endif %}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 </div>
-<p><small>Players with at least {{ min_games }} games; # is the place by
-  rating. Click a column header to sort.</small></p>
-<p><strong>Points vs. table</strong> is the other way to look at skill: how
-  many points per game fewer (−) or more (+) a player had than the others
-  at the same table, with the 95% interval (black-card games count half,
-  since their scores are doubled). Blue: clearly fewer points than the
-  table, red: clearly more. Over many games this separates the players
-  better than a rolling average, which over 20 games still moves by about
-  ±7 points by chance.</p>
+<p><small>Players with at least {{ min_games }} games (with 3 or more at the
+  table); # is the place by rating. Rating ± its 95% interval; colored where
+  the interval doesn't include 0 (blue: better than the table, red: worse).
+  Average: the plain average, without pulling toward 0. Click a column header
+  to sort.</small></p>
 
 <section>
   <h2>Rating over time</h2>
-  <p>The {{ chart_players }} best rated players.</p>
-  <div class="chart" id="ratings-chart"
-       data-src="{{ url_for('stats.ratings_chart', **keep) }}"></div>
-</section>
-
-<section>
-  <h2>How much is skill?</h2>
-  <p>Before each game the model gives every player a chance to win. If the
-    ratings mean something, the favorites should win more often than chance
-    (1 in N at a table of N). Counted over all games after the first
-    200:</p>
-  <div class="overflow-auto">
-  <table class="numbers">
-    <thead>
-      <tr><th class="text">Ranking of the other players</th><th>Games</th>
-        <th>Favorite won</th><th>By chance</th><th>Better than guessing</th></tr>
-    </thead>
-    <tbody>
-      {% for m, e in evaluation.items() %}
-      <tr>
-        <td class="text">{{ "by their points" if m == "points" else "only the win counts" }}</td>
-        <td>{{ e.games }}</td>
-        <td>{{ e.favorite|percent if e.games else "–" }}</td>
-        <td>{{ e.chance_favorite|percent if e.games else "–" }}</td>
-        <td>{{ "%+.2f%%"|format(100 * e.skill) if e.games else "–" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  </div>
-  <p>The favorites win somewhat more often than chance, but not by much: a
-    single game is mostly luck. Over hundreds of games, the small
-    differences between the players add up and become clear (see points vs.
-    table). Both ways of ranking predict about equally well, and so does
-    the points average: openskill only uses the order of the points, not
-    how far apart they are. ("Better than guessing"
-    compares the log loss of the predictions with guessing 1 in N; 0% would
-    be no better than chance.) The model assumes a lot of luck per game
-    (β = {{ beta|int }}); that value predicted best on these games.</p>
+  <p>The {{ chart_players }} best rated players, after each of their games.</p>
+  <div class="chart" id="ratings-chart" data-src="{{ url_for('stats.ratings_chart') }}"></div>
 </section>
 {% endblock %}

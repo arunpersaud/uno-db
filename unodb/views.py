@@ -310,13 +310,11 @@ def player(name):
         abort(404)
     data = st.player(rows)
     sort = st.Sort(SESSION_COLUMNS | {"wins": True}, "date")
-    rated = ratings.table(ratings.cached(st.all_scores(), "winner"), RATING_MIN_GAMES)
-    rating = next(
-        ({"rank": i + 1, "of": len(rated), **r} for i, r in enumerate(rated)
-         if r["player"] == row["id"]),
-        None,
-    )  # fmt: skip
     by_date = request.args.get("x") == "date"
+    rated = ratings.table(st.all_scores(), RATING_MIN_GAMES)
+    rating = next(
+        ({"of": len(rated), **r} for r in rated if r["player"] == row["id"]), None
+    )
     return render_template(
         "player.html",
         name=row["name"],
@@ -441,74 +439,38 @@ def compare_charts(names):
 
 # --- ratings ---------------------------------------------------------------------
 
-RATING_MIN_GAMES = 30
-# sort key -> sorts descending by default; points vs. the table: fewer first
-RATING_COLUMNS = {
-    "rating": True,
-    "name": False,
-    "games": True,
-    "win_ratio": True,
-    "vs_table_average": False,
-}
+RATING_MIN_GAMES = 10
 RATING_CHART_PLAYERS = 6
-
-
-def rating_mode() -> str:
-    return "points" if request.args.get("losers") == "points" else "winner"
+# sort key -> sorts descending by default
+RATING_COLUMNS = {
+    "rating": True, "name": False, "games": True, "average": True, "win_ratio": True,
+}  # fmt: skip
 
 
 @stats.route("/ratings")
 def ratings_page():
     rows = st.all_scores()
-    mode = rating_mode()
-    result = ratings.cached(rows, mode)
     ratio = {p["name"]: p["win_ratio"] for p in st.players(rows)}
-    vs_table = ratings.points_vs_table(rows)
-    table = ratings.table(result, RATING_MIN_GAMES)
-    for rank, row in enumerate(table, 1):
-        row["rank"] = rank
+    table = ratings.table(rows, RATING_MIN_GAMES)
+    for row in table:
         row["win_ratio"] = ratio.get(row["name"], 0.0)
-        row.update(
-            {f"vs_table_{k}": v for k, v in vs_table.get(row["player"], {}).items()}
-        )
-        row.setdefault("vs_table_average", None)
-        row.setdefault("vs_table_ci", None)
     sort = st.Sort(RATING_COLUMNS, "rating")
-    table = sort.apply(table)
-    evaluation = {m: ratings.evaluate(ratings.cached(rows, m)) for m in ratings.MODES}
     return render_template(
         "ratings.html",
-        table=table,
+        table=sort.apply(table),
         sort=sort,
-        mode=mode,
-        evaluation=evaluation,
         min_games=RATING_MIN_GAMES,
         chart_players=RATING_CHART_PLAYERS,
-        beta=ratings.BETA,
-        keep={"losers": "points"} if mode == "points" else {},
     )
 
 
 @stats.route("/ratings.json")
 def ratings_chart():
-    """Rating over time of the best rated players (date axis, as the
-    compare page)."""
+    """Rating over time of the best rated players."""
     rows = st.all_scores()
-    result = ratings.cached(rows, rating_mode())
-    top = ratings.table(result, RATING_MIN_GAMES)[:RATING_CHART_PLAYERS]
-    nr = st.day_numbers(rows)
-    values = []
-    for player in top:
-        values.append(
-            {
-                t: round(rating, 2)
-                for date, game, rating in result.history[player["player"]]
-                if (t := st.timestamp(date, nr[game])) is not None
-            }
-        )
-    return jsonify(
-        names=[p["name"] for p in top], by_date=True, **st.with_breaks(values)
-    )
+    top = ratings.table(rows, RATING_MIN_GAMES)[:RATING_CHART_PLAYERS]
+    data = ratings.history(rows, [p["player"] for p in top])
+    return jsonify(names=[p["name"] for p in top], by_date=True, **data)
 
 
 # --- CSV downloads -------------------------------------------------------------

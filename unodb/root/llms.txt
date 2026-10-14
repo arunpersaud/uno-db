@@ -14,7 +14,7 @@ game ends with a black card).
 - [Home](https://uno.nubati.net/): overview, active players, recent sessions
 - [Players](https://uno.nubati.net/players): games, wins, wins vs. chance, points per game
 - [Sessions](https://uno.nubati.net/sessions): all sessions with records
-- [Ratings](https://uno.nubati.net/ratings): openskill ratings and how much is skill
+- [Ratings](https://uno.nubati.net/ratings): points per game better than the table, pulled toward 0 for players with few games
 - [Game types](https://uno.nubati.net/variants): house rules
 
 ## Data
