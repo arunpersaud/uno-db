@@ -4,18 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>{% block title %}UNO statistics{% endblock %}</title>
+  <title>{% block title %}The UNO database{% endblock %}</title>
   <meta name="description" content="Statistics of our UNO games since 2003">
   <meta name="author" content="Arun Persaud">
+  <link rel="icon" href="{{ url_for('static', filename='draw4.png') }}" type="image/png">
   <link rel="stylesheet" href="{{ url_for('static', filename='pico.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block css %}{% endblock %}
 </head>
 
 <body>
   <header class="container">
     <nav>
       <ul>
-        <li><a href="{{ url_for('stats.index') }}"><strong>UNO statistics</strong></a></li>
+        <li><a href="{{ url_for('stats.index') }}" class="brand"><img src="{{ url_for('static', filename='draw4.png') }}" alt="" width="19" height="30"><strong>The UNO database</strong></a></li>
       </ul>
       <ul>
         <li><a href="{{ url_for('stats.players') }}">Players</a></li>
@@ -33,5 +35,6 @@
     <small>Copyright 2003-2026 Arun Persaud. Code available on
       <a href="https://github.com/arunpersaud/uno-db">github</a>.</small>
   </footer>
+  {% block javascript %}{% endblock %}
 </body>
 </html>

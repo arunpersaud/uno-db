@@ -1,32 +1,105 @@
 {% extends "base.html" %}
-{% block title %}{{ name }} – UNO statistics{% endblock %}
+{% from "_macros.html" import session_link %}
+{% block title %}{{ name }} – The UNO database{% endblock %}
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='uPlot.min.css') }}">
+{% endblock %}
 {% block content %}
 <hgroup>
   <h1>{{ name }}</h1>
-  <p>{{ summary.games }} games, {{ summary.wins }} wins
-    ({{ "%.1f"|format(100 * summary.win_rate) }}%),
-    {{ "%.1f"|format(summary.average) }} points per game (a win counts as 0)</p>
+  <p>{{ summary.games }} games in {{ summary.sessions }} sessions,
+    {{ summary.first }} to {{ summary.last }}</p>
 </hgroup>
 
-<p><a href="/index.php?name={{ name|urlencode }}">Statistics and charts on the old site</a></p>
+<div class="grid stats">
+  <article><header>Wins</header>
+    <p class="hero">{{ summary.wins }}</p>
+    <p>{{ summary.win_rate|percent }} of the games</p></article>
+  <article><header>Points per game</header>
+    <p class="hero">{{ summary.average|number }}</p>
+    <p>σ {{ summary.sigma|number }}, {{ summary.points }} points in total</p></article>
+  <article><header>Longest winning streak</header>
+    <p class="hero">{{ summary.streak }}</p>
+    <p>games in a row</p></article>
+  <article><header>Most points in one game</header>
+    <p class="hero">{{ summary.highest }}</p>
+    <p>{{ summary.black }} games ended with a black card</p></article>
+</div>
 
-<h2>Sessions</h2>
+{% if summary.best_session %}
+<p>Best session: {{ session_link(summary.best_session) }}
+  ({{ summary.best_session.average|number }} points per game).
+  Worst session: {{ session_link(summary.worst_session) }}
+  ({{ summary.worst_session.average|number }} points per game).
+  <small>Sessions with at least 3 games.</small></p>
+{% endif %}
+
+<section>
+  <h2>Points per game over time</h2>
+  <p>Average of the last <span id="window">20</span> games; fewer points is better.</p>
+  <div class="chart" id="moving-chart"
+       data-src="{{ url_for('stats.player_charts', name=name|slug) }}"></div>
+</section>
+
+<section>
+  <h2>Points in a game</h2>
+  <div class="chart" id="histogram-chart"></div>
+</section>
+
+<h2>By group size</h2>
 <div class="overflow-auto">
-<table class="striped">
+<table class="striped numbers">
   <thead>
-    <tr><th>Date</th><th>Location</th><th>Games</th><th>Wins</th><th>Points</th></tr>
+    <tr><th>Players</th><th>Games</th><th>Wins</th><th>Win rate</th>
+      <th>Points per game</th><th>σ</th></tr>
   </thead>
   <tbody>
-    {% for s in sessions %}
+    {% for g in group_sizes %}
     <tr>
-      <td><a href="{{ url_for('stats.session', date=s.date) }}">{{ s.date }}</a></td>
-      <td>{{ s.location }}</td>
-      <td>{{ s.games }}</td>
-      <td>{{ s.wins }}</td>
-      <td>{{ s.points }}</td>
+      <td>{{ g.size }}</td>
+      <td>{{ g.games }}</td>
+      <td>{{ g.wins }}</td>
+      <td>{{ g.win_rate|percent }}</td>
+      <td>{{ g.average|number }}</td>
+      <td>{{ g.sigma|number }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 </div>
+
+<h2>Sessions</h2>
+<p>Click a column header to sort. <a href="/index.php?name={{ name|urlencode }}">This
+  player on the old site</a></p>
+{% from "_macros.html" import th %}
+<div class="overflow-auto">
+<table class="striped numbers">
+  <thead>
+    <tr>
+      {{ th(sort, "date", "Date") }}
+      {{ th(sort, "location", "Location", "text") }}
+      {{ th(sort, "number_of_players", "Players") }}
+      {{ th(sort, "games", "Games") }}
+      {{ th(sort, "wins", "Wins") }}
+      {{ th(sort, "average", "Points per game") }}
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in sessions %}
+    <tr>
+      <td>{{ session_link(s) }}</td>
+      <td class="text">{{ s.location }}</td>
+      <td>{{ s.number_of_players }}</td>
+      <td>{{ s.games }}</td>
+      <td>{{ s.wins }}</td>
+      <td>{{ s.average|number }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
+{% block javascript %}
+<script src="{{ url_for('static', filename='uPlot.iife.min.js') }}"></script>
+<script src="{{ url_for('static', filename='charts.js') }}"></script>
 {% endblock %}

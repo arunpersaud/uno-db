@@ -5,7 +5,8 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    "url", ["/", "/sessions", "/session/2004-05-28", "/players", "/player/ann"]
+    "url",
+    ["/", "/sessions", "/session/2004-05-28", "/players", "/player/ann"],
 )
 def test_pages(client, url):
     assert client.get(url).status_code == 200
@@ -13,7 +14,10 @@ def test_pages(client, url):
 
 def test_index(client):
     html = client.get("/").text
-    assert "4 games in 3 sessions with" in html
+    assert "4 games in 3 sessions" in html
+    assert "A total of 10 scores" in html
+    assert "Lowest scoring game ever: 3.50" in html
+    assert "Lowest scoring session" not in html  # none with 3 games
     assert "2004-05-28 to 2004-06-01" in html
 
 
@@ -39,21 +43,57 @@ def test_not_found(client, url):
     assert client.get(url).status_code == 404
 
 
+PLAYER_ROW = re.compile(
+    r'<a href="/player/[a-z-]+">([^<]+)</a></td>\s*<td>(\d+)</td>\s*<td>(\d+)</td>'
+)
+
+
 def test_players(client):
-    html = client.get("/players").text
-    rows = re.findall(
-        r'<a href="/player/[a-z-]+">([^<]+)</a></td>\s*'
-        r"<td>(\d+)</td>\s*<td>(\d+)</td>",
-        html,
-    )
-    assert rows == [("Cy Young", "4", "0"), ("Ann", "3", "2"), ("Bob", "3", "2")]
+    # default: last played (all the same here), then most wins, then name
+    rows = PLAYER_ROW.findall(client.get("/players").text)
+    assert rows == [("Ann", "3", "2"), ("Bob", "3", "2"), ("Cy Young", "4", "0")]
+
+
+def test_players_sorted(client):
+    html = client.get("/players?sort=games&order=desc").text
+    assert PLAYER_ROW.findall(html)[0][0] == "Cy Young"
+    assert 'aria-sort="descending"><a href="/players?sort=games&amp;order=asc"' in html
+    # unknown columns fall back to the default
+    assert client.get("/players?sort=__class__").status_code == 200
+
+
+def test_sessions_sorted_by_average(client):
+    html = client.get("/sessions?sort=average&order=asc").text
+    averages = re.findall(r"<td>(\d+\.\d)</td>\s*</tr>", html)
+    assert averages == ["3.5", "10.0", "16.2"]
 
 
 def test_player(client):
     html = client.get("/player/cy-young").text
     assert "<h1>Cy Young</h1>" in html
-    assert "4 games, 0 wins" in html
-    assert "26.8 points per game" in html
+    assert "4 games in 3 sessions" in html
+    assert '<p class="hero">26.8</p>' in html  # points per game
+    assert "1 games ended with a black card" in html
+    # by group size: 2 games with 3 players, 2 with 2
+    assert re.search(r"<td>2</td>\s*<td>2</td>\s*<td>0</td>", html)
+    assert re.search(r"<td>3</td>\s*<td>2</td>\s*<td>0</td>", html)
+
+
+def test_player_charts(client):
+    data = client.get("/player/cy-young/charts.json").get_json()
+    assert data["moving"]["game"] == [1, 2, 3, 4]
+    assert data["moving"]["average"] == [None] * 4  # fewer than 20 games
+    hist = dict(
+        zip(data["histogram"]["labels"], data["histogram"]["counts"], strict=True)
+    )
+    assert hist["won"] == 0
+    assert hist["0–9"] == hist["20–29"] == hist["30–39"] == hist["50–59"] == 1
+    assert sum(hist.values()) == 4
+
+
+def test_player_charts_redirect(client):
+    response = client.get("/player/Cy%20Young/charts.json")
+    assert response.location == "/player/cy-young/charts.json"
 
 
 @pytest.mark.parametrize(

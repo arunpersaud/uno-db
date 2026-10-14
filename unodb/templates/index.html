@@ -1,15 +1,48 @@
 {% extends "base.html" %}
 {% block content %}
-<hgroup>
-  <h1>UNO statistics</h1>
-  <p>{{ totals.games }} games in {{ totals.sessions }} sessions with
-    {{ totals.players }} players, {{ totals.first }} to {{ totals.last }}.</p>
+<hgroup class="masthead">
+  <h1><img src="{{ url_for('static', filename='draw4.png') }}" alt="" width="58" height="91">
+    The UNO database</h1>
+  <p>All the game statistics you need</p>
 </hgroup>
 
-<p>This site is being rewritten. Player statistics, charts and the other
-  pages are still on the <a href="/index.php">old site</a>.</p>
+{% from "_macros.html" import session_link, game_link %}
+<p>
+  The database has {{ overview.games }} games in {{ overview.sessions }} sessions
+  with {{ totals.players }} players, {{ totals.first }} to {{ totals.last }}.<br>
+  The average score per game is {{ "%.2f"|format(overview.average) }}
+  ({{ overview.black_rate|percent }} of the games ended with a black card;
+  average for those games {{ "%.2f"|format(overview.black_average) }}).<br>
+  A total of {{ overview.scores }} scores are stored in the database.<br>
+  The smallest round of UNO had {{ overview.min_size }} players, the biggest
+  {{ overview.max_size }}, the average is {{ "%.2f"|format(overview.average_size) }}.<br>
+  {% with r = records %}
+  {% if r.low_game %}
+  Lowest scoring game ever: {{ "%.2f"|format(r.low_game.average) }}
+  ({{ game_link(r.low_game) }}, {{ r.low_game.location }}).<br>
+  Highest scoring game ever: {{ "%.2f"|format(r.high_game.average) }}
+  ({{ game_link(r.high_game) }}, {{ r.high_game.location }}).<br>
+  {% endif %}
+  {% if r.low_session %}
+  Lowest scoring session: {{ "%.2f"|format(r.low_session.average) }}
+  ({{ session_link(r.low_session) }}, {{ r.low_session.location }}).<br>
+  Highest scoring session: {{ "%.2f"|format(r.high_session.average) }}
+  ({{ session_link(r.high_session) }}, {{ r.high_session.location }}).
+  {% endif %}
+  {% endwith %}
+</p>
+<p><small>Scores are points per player and game; a win counts as 0. Sessions
+  need at least {{ records.min_games }} games for a record.</small></p>
+
+<p>This site is being rewritten. The comparison of several players and
+  other pages are still on the <a href="/index.php">old site</a>.</p>
+
+<h2>Active players</h2>
+<p>Games since {{ since }} (the last year with games).</p>
+{% with players=active, sort=none %}{% include "_players_table.html" %}{% endwith %}
+<p><a href="{{ url_for('stats.players') }}">All players</a></p>
 
 <h2>Recent sessions</h2>
-{% with sessions=recent %}{% include "_sessions_table.html" %}{% endwith %}
+{% with sessions=recent, sort=none %}{% include "_sessions_table.html" %}{% endwith %}
 <p><a href="{{ url_for('stats.sessions') }}">All sessions</a></p>
 {% endblock %}

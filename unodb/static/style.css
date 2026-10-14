@@ -16,3 +16,57 @@ td.winner {
   font-weight: bold;
   color: var(--pico-ins-color);
 }
+
+table.numbers td,
+table.numbers th {
+  text-align: right;
+}
+
+table.numbers td:first-child,
+table.numbers th:first-child,
+table.numbers .text {
+  text-align: left;
+}
+
+th[aria-sort="descending"] a::after {
+  content: " ▼";
+}
+
+th[aria-sort="ascending"] a::after {
+  content: " ▲";
+}
+
+tr:target td {
+  background-color: var(--pico-mark-background-color);
+}
+
+.records article,
+.stats article {
+  margin-bottom: var(--pico-spacing);
+}
+
+.records .hero,
+.stats .hero {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 0;
+}
+
+.chart {
+  min-height: 300px;
+  margin-bottom: var(--pico-spacing);
+}
+
+.u-legend {
+  color: var(--pico-muted-color);
+}
+
+.brand img {
+  vertical-align: middle;
+  margin-right: 0.5rem;
+}
+
+.masthead h1 img {
+  vertical-align: middle;
+  margin-right: 0.75rem;
+}

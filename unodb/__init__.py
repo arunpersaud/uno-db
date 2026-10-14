@@ -9,8 +9,7 @@ import os
 
 from flask import Flask
 
-from . import db
-from .views import stats
+from . import db, views
 
 # Everything is served from this site: no inline scripts or styles, no
 # CDNs. data: images are the icons inside pico.min.css.
@@ -49,6 +48,6 @@ def create_app(test_config: dict | None = None) -> Flask:
         response.headers.update(SECURITY_HEADERS)
         return response
 
-    app.register_blueprint(stats)
+    app.register_blueprint(views.stats)
 
     return app

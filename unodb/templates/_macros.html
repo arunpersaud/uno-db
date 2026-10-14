@@ -1,0 +1,16 @@
+{# table header cell; a sort link when the table is sortable #}
+{% macro th(sort, key, label, cls=none) -%}
+{% if sort -%}
+<th{% if cls %} class="{{ cls }}"{% endif %}{% if sort.aria(key) %} aria-sort="{{ sort.aria(key) }}"{% endif %}><a href="{{ sort.url(key) }}">{{ label }}</a></th>
+{%- else -%}
+<th{% if cls %} class="{{ cls }}"{% endif %}>{{ label }}</th>
+{%- endif %}
+{%- endmacro %}
+
+{% macro session_link(s) -%}
+<a href="{{ url_for('stats.session', date=s.date) }}">{{ s.date }}</a>
+{%- endmacro %}
+
+{% macro game_link(g) -%}
+<a href="{{ url_for('stats.session', date=g.date) }}#game-{{ g.id }}">{{ g.date }}</a>
+{%- endmacro %}

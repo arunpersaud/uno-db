@@ -1,0 +1,20 @@
+{% from "_macros.html" import session_link, game_link %}
+<div class="grid records">
+  {% for key, title, link in [
+       ("high_session", "Highest scoring session", session_link),
+       ("low_session", "Lowest scoring session", session_link),
+       ("high_game", "Highest scoring game", game_link),
+       ("low_game", "Lowest scoring game", game_link)] %}
+  {% set r = records[key] %}
+  {% if r %}
+  <article>
+    <header>{{ title }}</header>
+    <p class="hero">{{ r.average|number }}</p>
+    <p>points per player{{ " and game" if "session" in key }},
+      {{ link(r) }}, {{ r.location }}</p>
+  </article>
+  {% endif %}
+  {% endfor %}
+</div>
+<p><small>Sessions with at least {{ records.min_games }} games; a win counts as 0
+  points.</small></p>

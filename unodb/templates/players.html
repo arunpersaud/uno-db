@@ -1,22 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Players – UNO statistics{% endblock %}
+{% block title %}Players – The UNO database{% endblock %}
 {% block content %}
 <h1>Players</h1>
-<div class="overflow-auto">
-<table class="striped">
-  <thead>
-    <tr><th>Name</th><th>Games</th><th>Wins</th><th>Last played</th></tr>
-  </thead>
-  <tbody>
-    {% for p in players %}
-    <tr>
-      <td><a href="{{ url_for('stats.player', name=p.name|slug) }}">{{ p.name }}</a></td>
-      <td>{{ p.games }}</td>
-      <td>{{ p.wins }}</td>
-      <td>{{ p.last }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-</div>
+<p>Click a column header to sort.</p>
+{% include "_players_table.html" %}
 {% endblock %}

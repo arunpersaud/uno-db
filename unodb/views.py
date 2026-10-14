@@ -1,27 +1,55 @@
 """Public, read-only pages."""
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    abort,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
+from . import stats as st
 from .db import WINNER, query, query_one
 
 stats = Blueprint("stats", __name__)
 
-SESSIONS_SQL = """
-SELECT session.id, session.date, session.number_of_players,
-       locations.name AS location, variations.name AS variation,
-       variations.short AS variation_short,
-       (SELECT count(*) FROM games WHERE games.session = session.id) AS games
-FROM session
-LEFT JOIN locations ON locations.id = session.location_id
-LEFT JOIN variations ON variations.id = session.variation
-"""
-ORDER = " ORDER BY session.date DESC, session.id DESC"
+SESSION_COLUMNS = {
+    "date": True,
+    "location": False,
+    "number_of_players": True,
+    "games": True,
+    "average": True,
+}
+PLAYER_COLUMNS = {
+    "name": False,
+    "games": True,
+    "wins": True,
+    "win_rate": True,
+    "average": True,
+    "last": True,
+}
 
 
 @stats.app_template_filter()
 def slug(name: str) -> str:
     """URL form of a player name: 'Raymond Wheeler' -> 'raymond-wheeler'."""
     return "-".join(name.lower().split())
+
+
+@stats.app_template_filter()
+def percent(value: float) -> str:
+    return f"{100 * value:.1f}%"
+
+
+@stats.app_template_filter()
+def number(value: float) -> str:
+    return f"{value:.1f}"
+
+
+def newest_first(session_list: list[dict]) -> list[dict]:
+    return sorted(session_list, key=lambda s: (s["date"], s["id"]), reverse=True)
 
 
 @stats.route("/")
@@ -37,26 +65,51 @@ def index():
                    WHERE date GLOB '[12][0-9][0-9][0-9]-*') AS first,
                   (SELECT max(date) FROM session) AS last"""
     )
-    recent = query(SESSIONS_SQL + ORDER + " LIMIT 10")
-    return render_template("index.html", totals=totals, recent=recent)
+    rows = st.all_scores()
+    session_list = st.sessions(rows)
+
+    # active players: everyone who played in the last year with games
+    since = query_one("SELECT date(max(date), '-1 year') AS since FROM session")
+    since = since["since"]
+    active = st.players([row for row in rows if row["date"] >= since])
+    active.sort(key=lambda p: (-p["games"], p["name"]))
+
+    return render_template(
+        "index.html",
+        totals=totals,
+        recent=newest_first(session_list)[:10],
+        active=active,
+        since=since,
+        overview=st.overview(rows),
+        records=st.records(session_list, st.games(rows)),
+    )
 
 
 @stats.route("/sessions")
 def sessions():
-    return render_template("sessions.html", sessions=query(SESSIONS_SQL + ORDER))
+    rows = st.all_scores()
+    session_list = newest_first(st.sessions(rows))
+    sort = st.Sort(SESSION_COLUMNS, "date")
+    return render_template(
+        "sessions.html",
+        sessions=sort.apply(session_list),
+        sort=sort,
+        records=st.records(session_list, st.games(rows)),
+    )
 
 
 @stats.route("/session/<date>")
 def session(date):
     """All sessions of one day (sometimes there are several)."""
-    infos = query(SESSIONS_SQL + " WHERE session.date = ? ORDER BY session.id", (date,))
-    if not infos:
+    rows = st.all_scores(" WHERE session.date = ?", (date,))
+    if not rows:
         abort(404)
-    tables = [score_table(info["id"]) for info in infos]
+    session_list = st.sessions(rows)
+    tables = [score_table(s["id"]) for s in session_list]
     return render_template(
         "session.html",
         date=date,
-        sessions=zip(infos, tables, strict=True),
+        sessions=zip(session_list, tables, strict=True),
         winner=WINNER,
     )
 
@@ -79,7 +132,9 @@ def score_table(session_id: int) -> dict:
     games = {}
     for row in rows:
         players.setdefault(row["player"], row["name"])
-        game = games.setdefault(row["game"], {"black": row["black"], "scores": {}})
+        game = games.setdefault(
+            row["game"], {"id": row["game"], "black": row["black"], "scores": {}}
+        )
         game["scores"][row["player"]] = row["score"]
 
     totals = {
@@ -104,53 +159,47 @@ def score_table(session_id: int) -> dict:
 
 @stats.route("/players")
 def players():
-    rows = query(
-        """SELECT players.name, count(*) AS games,
-                  sum(scores.score = :winner) AS wins,
-                  max(session.date) AS last
-           FROM players
-           JOIN scores ON scores.player = players.id
-           JOIN games ON games.id = scores.game
-           JOIN session ON session.id = games.session
-           GROUP BY players.id
-           ORDER BY games DESC, players.name""",
-        {"winner": WINNER},
+    # default: most recently played, then most wins
+    player_list = sorted(
+        st.players(st.all_scores()), key=lambda p: (-p["wins"], p["name"])
     )
-    return render_template("players.html", players=rows)
+    sort = st.Sort(PLAYER_COLUMNS, "last")
+    return render_template("players.html", players=sort.apply(player_list), sort=sort)
 
 
-@stats.route("/player/<name>")
-def player(name):
+def find_player(name: str):
+    """(players row, None), or (None, redirect to the canonical URL)."""
     by_slug = {slug(row["name"]): row for row in query("SELECT * FROM players")}
     row = by_slug.get(slug(name))
     if row is None:
         abort(404)
     if name != slug(row["name"]):
-        return redirect(url_for(".player", name=slug(row["name"])), 301)
+        args = request.view_args | {"name": slug(row["name"])}
+        return None, redirect(url_for(request.endpoint, **args), 301)
+    return row, None
 
-    sessions = query(
-        """SELECT session.date, locations.name AS location,
-                  count(*) AS games,
-                  sum(scores.score = :winner) AS wins,
-                  sum(iif(scores.score = :winner, 0, scores.score)) AS points
-           FROM scores
-           JOIN games ON games.id = scores.game
-           JOIN session ON session.id = games.session
-           LEFT JOIN locations ON locations.id = session.location_id
-           WHERE scores.player = :player
-           GROUP BY session.id
-           ORDER BY session.date DESC, session.id DESC""",
-        {"winner": WINNER, "player": row["id"]},
-    )
-    games = sum(s["games"] for s in sessions)
-    wins = sum(s["wins"] for s in sessions)
-    points = sum(s["points"] for s in sessions)
-    summary = {
-        "games": games,
-        "wins": wins,
-        "win_rate": wins / games if games else 0,
-        "average": points / games if games else 0,
-    }
+
+@stats.route("/player/<name>")
+def player(name):
+    row, response = find_player(name)
+    if response:
+        return response
+    data = st.player(st.all_scores(" WHERE scores.player = ?", (row["id"],)))
+    sort = st.Sort(SESSION_COLUMNS | {"wins": True}, "date")
     return render_template(
-        "player.html", name=row["name"], summary=summary, sessions=sessions
+        "player.html",
+        name=row["name"],
+        summary=data["summary"],
+        group_sizes=data["group_sizes"],
+        sessions=sort.apply(newest_first(data["sessions"])),
+        sort=sort,
     )
+
+
+@stats.route("/player/<name>/charts.json")
+def player_charts(name):
+    row, response = find_player(name)
+    if response:
+        return response
+    rows = st.all_scores(" WHERE scores.player = ?", (row["id"],))
+    return jsonify(st.player_charts(rows))

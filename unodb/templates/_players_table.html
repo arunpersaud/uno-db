@@ -1,0 +1,27 @@
+{% from "_macros.html" import th %}
+<div class="overflow-auto">
+<table class="striped numbers">
+  <thead>
+    <tr>
+      {{ th(sort, "name", "Name") }}
+      {{ th(sort, "games", "Games") }}
+      {{ th(sort, "wins", "Wins") }}
+      {{ th(sort, "win_rate", "Win rate") }}
+      {{ th(sort, "average", "Points per game") }}
+      {{ th(sort, "last", "Last played") }}
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in players %}
+    <tr>
+      <td><a href="{{ url_for('stats.player', name=p.name|slug) }}">{{ p.name }}</a></td>
+      <td>{{ p.games }}</td>
+      <td>{{ p.wins }}</td>
+      <td>{{ p.win_rate|percent }}</td>
+      <td>{{ p.average|number }}</td>
+      <td>{{ p.last }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>

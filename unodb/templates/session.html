@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ date }} – UNO statistics{% endblock %}
+{% block title %}{{ date }} – The UNO database{% endblock %}
 {% block content %}
 <h1>{{ date }}</h1>
 
@@ -7,7 +7,8 @@
 <section>
 <hgroup>
   <h2>{{ info.location }}</h2>
-  <p>{{ info.variation }} · {{ table.games|length }} games</p>
+  <p>{{ info.variation }} · {{ table.games|length }} games ·
+    {{ info.average|number }} points per player and game</p>
 </hgroup>
 
 <div class="overflow-auto">
@@ -23,7 +24,7 @@
   </thead>
   <tbody>
     {% for game in table.games %}
-    <tr>
+    <tr id="game-{{ game.id }}">
       <td>{{ loop.index }}</td>
       {% for player in table.players %}
       {% set score = game.scores.get(player) %}
