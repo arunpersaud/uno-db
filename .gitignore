@@ -1,2 +1,7 @@
 config.php
 .htaccess
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+instance/

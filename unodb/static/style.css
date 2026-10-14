@@ -1,0 +1,18 @@
+footer {
+  border-top: var(--pico-border-width) solid var(--pico-muted-border-color);
+}
+
+table.scores td,
+table.scores th {
+  text-align: right;
+}
+
+table.scores td:first-child,
+table.scores th:first-child {
+  text-align: left;
+}
+
+td.winner {
+  font-weight: bold;
+  color: var(--pico-ins-color);
+}

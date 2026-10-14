@@ -1,0 +1,18 @@
+<div class="overflow-auto">
+<table class="striped">
+  <thead>
+    <tr><th>Date</th><th>Location</th><th>Players</th><th>Games</th><th>Variant</th></tr>
+  </thead>
+  <tbody>
+    {% for s in sessions %}
+    <tr>
+      <td><a href="{{ url_for('stats.session', session_id=s.id) }}">{{ s.date }}</a></td>
+      <td>{{ s.location }}</td>
+      <td>{{ s.number_of_players }}</td>
+      <td>{{ s.games }}</td>
+      <td>{{ s.variation }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>

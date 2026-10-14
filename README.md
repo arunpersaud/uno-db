@@ -12,9 +12,20 @@ Extracted (with history) from the `uno-db/` directory of
   (`IF`, `STD`, `POINT`, `X`, `Y`) are provided as SQLite user functions in
   `include/functions.php`, so the queries themselves are unchanged.
 - tag `mysql-final`: last MySQL version.
-- Planned: rewrite in Python (Flask + Jinja2) on the same SQLite database.
+- In progress: rewrite in Python (Flask + Jinja2, package `unodb/`) on the
+  same SQLite database. Pages not rewritten yet are still served by the
+  PHP code.
 
-## Setup
+## Flask app
+
+    uv sync
+    uv run pytest
+    FLASK_DATABASE=uno.sqlite uv run flask --app unodb run --debug
+
+`Containerfile` builds the production image (gunicorn on port 8000,
+database at `/data/uno.sqlite`).
+
+## Setup (PHP)
 
 1. Create the database, either empty
 

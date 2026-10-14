@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Session {{ info.date }} – UNO statistics{% endblock %}
+{% block content %}
+<hgroup>
+  <h1>Session {{ info.date }}</h1>
+  <p>{{ info.location }} · {{ info.variation }} · {{ games|length }} games</p>
+</hgroup>
+
+<div class="overflow-auto">
+<table class="striped scores">
+  <thead>
+    <tr>
+      <th>Game</th>
+      {% for name in players.values() %}<th>{{ name }}</th>{% endfor %}
+      <th>Black card</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for game in games %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      {% for player in players %}
+      {% set score = game.scores.get(player) %}
+      {% if score == winner %}<td class="winner">won</td>
+      {% elif score is none %}<td></td>
+      {% else %}<td>{{ score }}</td>{% endif %}
+      {% endfor %}
+      <td>{{ "yes" if game.black }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <th>Total</th>
+      {% for player in players %}<th>{{ totals[player] }}</th>{% endfor %}
+      <th></th>
+    </tr>
+    <tr>
+      <th>Wins</th>
+      {% for player in players %}<th>{{ wins[player] }}</th>{% endfor %}
+      <th></th>
+    </tr>
+  </tfoot>
+</table>
+</div>
+{% endblock %}
