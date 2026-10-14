@@ -52,6 +52,33 @@ ALTER TABLE session ADD COLUMN created_by INTEGER REFERENCES users(id);
 ALTER TABLE session ADD COLUMN deleted TEXT;  -- soft delete: time
 CREATE INDEX session_created_by ON session(created_by);
 """,
+    # score entry: players of a session in seating order (also before the
+    # first game), who created players/locations/game types, rules texts,
+    # unique names
+    6: """
+CREATE TABLE session_players (
+  session     INTEGER NOT NULL REFERENCES session(id),
+  player      INTEGER NOT NULL REFERENCES players(id),
+  seat        INTEGER NOT NULL,  -- 0, 1, ... (scores.position of new games)
+  PRIMARY KEY (session, player)
+);
+-- seats of the old sessions: from each player's first game in the session
+INSERT INTO session_players (session, player, seat)
+SELECT games.session, scores.player, scores.position
+FROM scores JOIN games ON games.id = scores.game
+WHERE games.id = (
+  SELECT min(g2.id) FROM games g2 JOIN scores s2 ON s2.game = g2.id
+  WHERE g2.session = games.session AND s2.player = scores.player
+);
+ALTER TABLE players ADD COLUMN created_by INTEGER REFERENCES users(id);
+ALTER TABLE locations ADD COLUMN created_by INTEGER REFERENCES users(id);
+ALTER TABLE variations ADD COLUMN created_by INTEGER REFERENCES users(id);
+ALTER TABLE variations ADD COLUMN description TEXT;  -- the rules
+CREATE UNIQUE INDEX players_name ON players(name COLLATE NOCASE);
+CREATE UNIQUE INDEX locations_name ON locations(name COLLATE NOCASE);
+CREATE UNIQUE INDEX variations_short ON variations(short COLLATE NOCASE);
+CREATE UNIQUE INDEX scores_game_player ON scores(game, player);
+""",
 }
 
 LATEST = max(MIGRATIONS)

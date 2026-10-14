@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}New session – Admin – The UNO database{% endblock %}
+{% block content %}
+<h1>New session</h1>
+{% include "admin/_problems.html" %}
+<form method="post" action="{{ url_for('admin.new_session') }}">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <div class="grid">
+    <label>Date
+      <input type="date" name="date" value="{{ values.date }}" required>
+    </label>
+    <label>Location
+      <input type="text" name="location" list="locations" value="{{ values.location }}"
+             autocomplete="off" required>
+    </label>
+  </div>
+  <label>Game type
+    <select name="variant" required>
+      {% for v in variants %}
+      <option value="{{ v.id }}" {{ "selected" if v.id == values.variant }}>{{ v.name }}</option>
+      {% endfor %}
+    </select>
+    <small>Different rules? <a href="{{ url_for('admin.variant_form', next=request.path) }}">Create a game type</a></small>
+  </label>
+
+  <fieldset>
+    <legend>Players in seating order</legend>
+    {% set names = values.players %}
+    {% for i in range(max_seats) %}
+    {% if i == 6 %}<details {{ "open" if names|length > 6 }}><summary>More players</summary>{% endif %}
+    <input type="text" name="player" list="players" value="{{ names[i] if i < names|length }}"
+           placeholder="Player {{ i + 1 }}" aria-label="Player {{ i + 1 }}" autocomplete="off">
+    {% endfor %}
+    </details>
+    <small>{% if current_user.role == "contributor" %}New players need first and
+      last name. {% endif %}Pick existing players from the list.</small>
+  </fieldset>
+
+  {% if to_create %}
+  <article class="confirm">
+    <p>These don't exist yet and will be created:</p>
+    <ul>{% for item in to_create %}<li>{{ item }}</li>{% endfor %}</ul>
+    <label><input type="checkbox" name="create" value="yes" required> Yes, create them
+      (check the spelling first)</label>
+  </article>
+  {% endif %}
+
+  <button type="submit">{{ "Create session" if not to_create else "Create session and the new entries" }}</button>
+</form>
+
+<datalist id="locations">{% for l in locations %}<option value="{{ l.name }}"></option>{% endfor %}</datalist>
+<datalist id="players">{% for p in pickable %}<option value="{{ p.name }}"></option>{% endfor %}</datalist>
+{% endblock %}

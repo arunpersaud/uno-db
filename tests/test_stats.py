@@ -24,6 +24,8 @@ def row(game, score, session=1, date="2004-01-01", players=3):
         "date": date,
         "location": "Lodi",
         "variation": "Uno default",
+        "variation_short": "Uno",
+        "created_by": None,
         "number_of_players": players,
         "game": game,
         "black": 0,

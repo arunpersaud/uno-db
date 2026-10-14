@@ -309,3 +309,36 @@ table.correlation tbody th {
   border-radius: var(--pico-border-radius);
   background-color: var(--pico-mark-background-color);
 }
+
+/* admin: score entry */
+.problems {
+  padding: var(--pico-spacing);
+  border-radius: var(--pico-border-radius);
+  background-color: color-mix(in srgb, var(--pico-del-color) 15%, transparent);
+  margin-bottom: var(--pico-spacing);
+}
+
+.problems ul {
+  margin-bottom: 0;
+}
+
+table.entry input[type="number"] {
+  width: 7rem;
+  margin-bottom: 0;
+}
+
+table.entry td {
+  vertical-align: middle;
+}
+
+tr.editing td {
+  background-color: var(--pico-mark-background-color);
+}
+
+.rules {
+  white-space: pre-line;
+}
+
+.confirm {
+  border: 2px solid var(--pico-primary);
+}

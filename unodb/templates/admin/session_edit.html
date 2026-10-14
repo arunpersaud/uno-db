@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}{{ session.date }} – Admin – The UNO database{% endblock %}
+{% block content %}
+<div id="entry" hx-boost="true" hx-target="#entry" hx-select="#entry"
+     hx-swap="outerHTML show:none" hx-push-url="false">
+<hgroup>
+  <h1>{{ session.date }}, {{ info.location }}</h1>
+  <p>{{ info.variant }} · {{ games|length }} games ·
+    <a href="{{ url_for('stats.session', date=session.date) }}" hx-boost="false">public page</a></p>
+</hgroup>
+{% include "admin/_problems.html" %}
+
+{% set editing = games|selectattr("id", "equalto", edit)|first %}
+<section>
+  {% if editing %}
+  <h2>Change game {{ (games|map(attribute="id")|list).index(editing.id) + 1 }}</h2>
+  {% with game = editing %}{% include "admin/_game_form.html" %}{% endwith %}
+  <div class="grid">
+    <a href="{{ url_for('admin.edit_session', session_id=session.id) }}" role="button" class="secondary outline">Cancel</a>
+    <form method="post" action="{{ url_for('admin.delete_game', session_id=session.id, game_id=editing.id) }}">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <button type="submit" class="secondary">Delete this game</button>
+    </form>
+  </div>
+  {% else %}
+  <h2>Game {{ games|length + 1 }}</h2>
+  {% with game = none %}{% include "admin/_game_form.html" %}{% endwith %}
+  {% endif %}
+</section>
+
+{% if games %}
+<section>
+  <h2>Games</h2>
+  <div class="overflow-auto">
+  <table class="striped scores">
+    <thead>
+      <tr><th>Game</th>{% for p in players %}<th>{{ p.name }}</th>{% endfor %}<th>Black card</th></tr>
+    </thead>
+    <tbody>
+      {% for game in games|reverse %}
+      <tr{% if game.id == edit %} class="editing"{% endif %}>
+        <td><a href="{{ url_for('admin.edit_session', session_id=session.id, edit=game.id) }}"
+               title="Change game {{ games|length - loop.index0 }}">{{ games|length - loop.index0 }} ✎</a></td>
+        {% for p in players %}
+        {% set score = game.scores.get(p.id) %}
+        {% if score == winner %}<td class="winner">won</td>
+        {% elif score is none %}<td></td>
+        {% else %}<td>{{ score }}</td>{% endif %}
+        {% endfor %}
+        <td>{% if game.black %}✓{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p><small>Newest game first. Click a game number to change or delete it.</small></p>
+</section>
+{% endif %}
+
+<details>
+  <summary>Add a player to this session</summary>
+  <form method="post" action="{{ url_for('admin.add_player', session_id=session.id) }}">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <fieldset role="group">
+      <input type="text" name="player" list="players" placeholder="Name" required autocomplete="off">
+      <button type="submit">Add</button>
+    </fieldset>
+    <label><input type="checkbox" name="create" value="yes"> Create this player if new</label>
+  </form>
+</details>
+
+<details>
+  <summary>Change date, location or game type</summary>
+  <form method="post" action="{{ url_for('admin.update_session', session_id=session.id) }}">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <div class="grid">
+      <label>Date <input type="date" name="date" value="{{ session.date }}" required></label>
+      <label>Location <input type="text" name="location" list="locations" value="{{ info.location }}" required autocomplete="off"></label>
+    </div>
+    <label>Game type
+      <select name="variant">
+        {% for v in variants %}<option value="{{ v.id }}" {{ "selected" if v.id == session.variation }}>{{ v.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label><input type="checkbox" name="create" value="yes"> Create the location if new</label>
+    <button type="submit">Save</button>
+  </form>
+</details>
+
+<details>
+  <summary>Delete this session</summary>
+  <p>The session and its games disappear from the statistics. An admin can
+    bring it back.</p>
+  <form method="post" action="{{ url_for('admin.delete_session', session_id=session.id) }}" hx-boost="false">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <button type="submit" class="secondary">Delete session</button>
+  </form>
+</details>
+
+<datalist id="locations">{% for l in locations %}<option value="{{ l.name }}"></option>{% endfor %}</datalist>
+<datalist id="players">{% for p in pickable if p.name not in players|map(attribute="name") %}<option value="{{ p.name }}"></option>{% endfor %}</datalist>
+</div>
+<p><a href="{{ url_for('admin.sessions') }}">All your sessions</a></p>
+{% endblock %}

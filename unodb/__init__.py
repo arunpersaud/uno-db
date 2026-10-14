@@ -20,7 +20,7 @@ from urllib.parse import urlsplit
 
 from flask import Flask, request
 
-from . import auth, db, views
+from . import auth, db, entry, views  # noqa: F401 (entry adds admin routes)
 from .cli import uno
 
 # Everything is served from this site: no inline scripts or styles, no

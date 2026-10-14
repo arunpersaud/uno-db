@@ -23,7 +23,8 @@ HISTOGRAM_MAX = 150  # last bin: this and more
 
 SCORES_SQL = """
 SELECT session.id AS session, session.date, session.number_of_players,
-       locations.name AS location, variations.name AS variation,
+       session.created_by, locations.name AS location,
+       variations.name AS variation, variations.short AS variation_short,
        games.id AS game, games.end_with_black_card AS black,
        scores.player, players.name, scores.score, scores.position
 FROM scores
@@ -72,6 +73,8 @@ def sessions(rows) -> list[dict]:
                 "date": row["date"],
                 "location": row["location"],
                 "variation": row["variation"],
+                "variation_short": row["variation_short"],
+                "created_by": row["created_by"],
                 "number_of_players": row["number_of_players"],
                 "game_ids": set(),
                 "scores": [],

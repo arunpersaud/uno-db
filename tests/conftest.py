@@ -12,7 +12,8 @@ SCHEMA = Path(__file__).parent.parent / "schema-sqlite.sql"
 # game 1, Bob game 2
 DATA = """
 INSERT INTO version VALUES (4);
-INSERT INTO variations (id, name, short) VALUES (1, 'Uno default', 'Uno');
+INSERT INTO variations (id, name, short)
+    VALUES (1, 'Uno default', 'Uno'), (2, 'Black Rock Uno', 'Bruno');
 INSERT INTO locations (id, name) VALUES (1, 'Berkeley'), (2, 'Lodi');
 INSERT INTO players (id, name) VALUES (1, 'Ann'), (2, 'Bob'), (3, 'Cy Young');
 INSERT INTO session (id, date, location_id, number_of_players, variation)

@@ -11,8 +11,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='pico.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='uPlot.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <!-- no inline styles or eval for htmx (CSP); scripts are loaded once below -->
-  <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false, "historyCacheSize": 0}'>
+  <!-- no inline styles or eval for htmx (CSP): no indicator stylesheet, and
+       "style" isn't copied while settling (setting it counts as inline style);
+       scripts are loaded once below -->
+  <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false, "historyCacheSize": 0, "attributesToSettle": ["class", "width", "height"]}'>
   {% block css %}{% endblock %}
   {% block head %}{% endblock %}
 </head>

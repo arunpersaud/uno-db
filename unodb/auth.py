@@ -163,6 +163,7 @@ def start():
     return render_template(
         "admin/start.html",
         passkeys=[dict(p, key=bytes_to_base64url(p["id"])) for p in passkeys],
+        variants=query("SELECT id, name FROM variations ORDER BY id"),
     )
 
 

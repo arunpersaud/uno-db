@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ variant.name }} – The UNO database{% endblock %}
+{% block content %}
+<hgroup>
+  <h1>{{ variant.name }}</h1>
+  <p>{{ counts.games }} games in {{ counts.sessions }} sessions{% if variant.author %},
+    described by {{ variant.author }}{% endif %}</p>
+</hgroup>
+{% if variant.description %}
+<div class="rules">{{ variant.description }}</div>
+{% else %}
+<p>The rules of this game type haven't been written down yet.</p>
+{% endif %}
+{% if current_user and (current_user.role == "admin" or variant.created_by == current_user.id) %}
+<p><a href="{{ url_for('admin.variant_form', variant_id=variant.id) }}">Change the description</a></p>
+{% endif %}
+<p><a href="{{ url_for('stats.variants') }}">All game types</a></p>
+{% endblock %}

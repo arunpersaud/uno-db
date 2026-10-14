@@ -1,0 +1,29 @@
+{# form for a new game (game=none) or to change one #}
+{% set v = values.get(game.id if game else "new", {}) %}
+{% set scores = v.scores if v else (game.scores if game else {}) %}
+{% set won = v.winner if v else (game.winner if game else none) %}
+{% set black = v.black if v else (game and game.black) %}
+{% set action = url_for('admin.update_game', session_id=session.id, game_id=game.id) if game
+                else url_for('admin.add_game', session_id=session.id) %}
+<form method="post" action="{{ action }}" class="game-form">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <table class="entry">
+    <thead><tr><th>Player</th><th>Points</th><th>Won</th></tr></thead>
+    <tbody>
+      {% for p in players %}
+      <tr>
+        <td><label for="score-{{ p.id }}">{{ p.name }}</label></td>
+        <td><input type="number" id="score-{{ p.id }}" name="score-{{ p.id }}" min="0" max="1000"
+                   inputmode="numeric" value="{{ scores.get(p.id, '') if scores.get(p.id) != winner }}"
+                   {{ "autofocus" if loop.first and not game }}></td>
+        <td><input type="radio" name="winner" value="{{ p.id }}" aria-label="{{ p.name }} won"
+                   {{ "checked" if won == p.id }}></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <label><input type="checkbox" name="black" value="yes" {{ "checked" if black }}>
+    Ended with a black card</label>
+  <small>Leave the points empty for someone who didn't play this game.</small>
+  <button type="submit">{{ "Save changes" if game else "Save game" }}</button>
+</form>

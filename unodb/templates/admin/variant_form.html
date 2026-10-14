@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Game type – Admin – The UNO database{% endblock %}
+{% block content %}
+<h1>{{ "Change game type" if variant else "New game type" }}</h1>
+<p>Describe your house rules, so others know what the scores mean: e.g.
+  stacking +2/+4 cards, what happens with the last card, how points are
+  counted, when a game ends.</p>
+{% include "admin/_problems.html" %}
+<form method="post">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="next" value="{{ next }}">
+  <label>Name <input type="text" name="name" value="{{ values.name }}" required maxlength="60"
+    placeholder="e.g. Uno with stacking"></label>
+  <label>Short name <input type="text" name="short" value="{{ values.short }}" required maxlength="20"
+    placeholder="e.g. stacking"><small>Letters, digits and '-', used in the address of the rules page.</small></label>
+  <label>Rules <textarea name="description" rows="8" required>{{ values.description or "" }}</textarea></label>
+  <button type="submit">Save</button>
+</form>
+{% endblock %}

@@ -12,7 +12,7 @@ from flask import (
 )
 
 from . import stats as st
-from .db import WINNER, query, read_only
+from .db import WINNER, query, query_one, read_only
 
 stats = Blueprint("stats", __name__)
 # public pages never write
@@ -86,6 +86,35 @@ def index():
         overview=st.overview(rows),
         records=st.records(session_list, st.games(rows)),
     )
+
+
+@stats.route("/variants")
+def variants():
+    rows = query(
+        """SELECT variations.*, count(session.id) AS sessions
+           FROM variations LEFT JOIN session ON session.variation = variations.id
+             AND session.deleted IS NULL
+           GROUP BY variations.id ORDER BY sessions DESC, variations.name"""
+    )
+    return render_template("variants.html", variants=rows)
+
+
+@stats.route("/variant/<short>")
+def variant(short):
+    row = query_one(
+        """SELECT variations.*, users.name AS author FROM variations
+           LEFT JOIN users ON users.id = variations.created_by WHERE short = ?""",
+        (short,),
+    )
+    if row is None:
+        abort(404)
+    games = query_one(
+        """SELECT count(DISTINCT session.id) AS sessions, count(games.id) AS games
+           FROM session LEFT JOIN games ON games.session = session.id
+           WHERE session.variation = ? AND session.deleted IS NULL""",
+        (row["id"],),
+    )
+    return render_template("variant.html", variant=row, counts=games)
 
 
 @stats.route("/contribute")

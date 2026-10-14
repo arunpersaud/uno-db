@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Game types – The UNO database{% endblock %}
+{% block content %}
+<h1>Game types</h1>
+<p>Groups play UNO with different house rules. Each session records which
+  rules it was played with.</p>
+<ul>
+  {% for v in variants %}
+  <li><a href="{{ url_for('stats.variant', short=v.short) }}">{{ v.name }}</a>
+    ({{ v.sessions }} sessions)</li>
+  {% endfor %}
+</ul>
+{% endblock %}

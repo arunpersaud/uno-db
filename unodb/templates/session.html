@@ -7,8 +7,10 @@
 <section>
 <hgroup>
   <h2>{{ info.location }}</h2>
-  <p>{{ info.variation }} · {{ table.games|length }} games ·
-    {{ info.average|number }} points per player and game</p>
+  <p><a href="{{ url_for('stats.variant', short=info.variation_short) }}">{{ info.variation }}</a> · {{ table.games|length }} games ·
+    {{ info.average|number }} points per player and game
+    {%- if current_user and (current_user.role != "contributor" or info.created_by == current_user.id) %}
+    · <a href="{{ url_for('admin.edit_session', session_id=info.id) }}">edit</a>{% endif %}</p>
 </hgroup>
 
 <div class="overflow-auto">

@@ -34,9 +34,9 @@ def log_in(client, uid):
         session["csrf"] = "test-token"
 
 
-def test_migration_to_v5(app, database):
+def test_migrations(app, database):
     db = sqlite3.connect(database)
-    assert db.execute("SELECT version FROM version").fetchone()[0] == 5
+    assert db.execute("SELECT version FROM version").fetchone()[0] == 6
     columns = [r[1] for r in db.execute("PRAGMA table_info(session)")]
     assert "created_by" in columns and "deleted" in columns
     # a copy of the v4 database was made first
@@ -48,7 +48,7 @@ def test_migration_runs_once(database):
 
     from unodb import migrations
 
-    assert migrations.migrate(Path(database)) == [5]
+    assert migrations.migrate(Path(database)) == [5, 6]
     assert migrations.migrate(Path(database)) == []
 
 

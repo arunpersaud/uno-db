@@ -23,8 +23,27 @@
   </ul>
 </article>
 
-<p><strong>Entering games is not available yet</strong>; it's the next part
-  being built.</p>
+<p>
+  <a href="{{ url_for('admin.new_session') }}" role="button">Enter a new session</a>
+  <a href="{{ url_for('admin.sessions') }}" role="button" class="secondary outline">
+    {{ "All sessions" if current_user.role != "contributor" else "Your sessions" }}</a>
+</p>
+
+<form method="post" action="{{ url_for('admin.settings') }}" class="settings">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <label>Your usual game type (pre-selected for new sessions)
+    <fieldset role="group">
+      <select name="default_variant">
+        {% for v in variants %}
+        <option value="{{ v.id }}" {{ "selected" if v.id == (current_user.default_variant or 1) }}>{{ v.name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="secondary">Save</button>
+    </fieldset>
+  </label>
+  <small><a href="{{ url_for('stats.variants') }}">Rules of the game types</a> ·
+    <a href="{{ url_for('admin.variant_form') }}">create a new game type</a></small>
+</form>
 
 <h2>Your passkeys</h2>
 <div class="overflow-auto">
