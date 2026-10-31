@@ -368,3 +368,68 @@ def test_default_game_type(app, client, contributor):
     post(client, "/admin/settings", {"default_variant": "2"})
     html = client.get("/admin/sessions/new").text
     assert re.search(r'<option value="2" selected>', html)
+
+
+# --- exactly one winner, nobody twice ----------------------------------------------
+
+
+def test_game_needs_exactly_one_winner(app, client, own_session):
+    a, b, c = player_ids(app, own_session)
+    url = f"/admin/sessions/{own_session}/games"
+    # two winners in one forged request
+    response = client.post(
+        url,
+        data=MultiDict(
+            [("csrf", CSRF), ("winner", a), ("winner", b), (f"score-{c}", "9")]
+        ),
+    )
+    assert "Please mark who won." in response.text
+    # a winner who isn't in the session
+    assert (
+        "Please mark who won."
+        in post(client, url, {"winner": 1, f"score-{b}": "5"}).text
+    )
+    # the winner's own points are ignored
+    post(client, url, {"winner": a, f"score-{a}": "77", f"score-{b}": "5"})
+    scores = db_rows(
+        app, "SELECT player, score FROM scores WHERE game = (SELECT max(id) FROM games)"
+    )
+    assert sorted((s["player"], s["score"]) for s in scores) == sorted(
+        [(a, WINNER), (b, 5)]
+    )
+    assert (
+        len(db_rows(app, "SELECT * FROM games WHERE session = ?", (own_session,))) == 1
+    )
+
+
+def test_database_refuses_a_second_winner(app):
+    import sqlite3
+
+    with app.app_context():
+        db = get_db()
+        # game 1 already has Ann as winner
+        with pytest.raises(sqlite3.IntegrityError, match="one winner"):
+            db.execute(
+                "INSERT INTO scores (game, player, score) VALUES (1, 2, ?)", (WINNER,)
+            )
+        with pytest.raises(sqlite3.IntegrityError, match="one winner"):
+            db.execute(
+                "UPDATE scores SET score = ? WHERE game = 1 AND player = 2", (WINNER,)
+            )
+        # moving the win to the other player in one go is done by delete + insert
+        db.execute("DELETE FROM scores WHERE game = 1")
+        db.execute(
+            "INSERT INTO scores (game, player, score) VALUES (1, 2, ?)", (WINNER,)
+        )
+
+
+def test_player_twice_in_new_session(app, client, admin):
+    html = new_session(client, ["Ann", "ann", "Bob"]).text
+    assert "A player is in the list twice." in html
+    assert db_rows(app, "SELECT * FROM session WHERE date = '2026-10-14'") == []
+
+
+def test_game_form_asks_for_a_winner(app, client, own_session):
+    html = client.get(f"/admin/sessions/{own_session}").text
+    assert html.count("data-winner required") == 3
+    assert "data-game-form" in html

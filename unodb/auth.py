@@ -132,6 +132,18 @@ def login_required(view):
     return wrapped
 
 
+def admin_required(view):
+    """Logged in AND role admin (editors and contributors get 403)."""
+
+    @wraps(view)
+    def checked(*args, **kwargs):
+        if g.user["role"] != "admin":
+            abort(403)
+        return view(*args, **kwargs)
+
+    return login_required(checked)
+
+
 def rp_id() -> str:
     return current_app.config["RP_ID"]
 

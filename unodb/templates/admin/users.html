@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Users – Admin – The UNO database{% endblock %}
+{% block content %}
+<h1>Users</h1>
+<p>Contributors enter sessions and correct their own; editors correct any
+  session. Admins can do everything. <strong>Admin rights are only given or
+  taken away on the command line</strong> (<code>flask uno set-role</code>, which
+  needs access to the server), so they can't be changed here. New logins come
+  from <code>flask uno invite</code>.</p>
+<div class="overflow-auto">
+<table class="striped">
+  <thead><tr><th>Name</th><th>Role</th><th>Sessions</th><th>Passkeys</th><th>Since</th></tr></thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.name }}{% if u.disabled %} <small>(login removed)</small>{% endif %}</td>
+      <td>
+        {% if u.role == "admin" %}admin
+        {% else %}
+        <form method="post" action="{{ url_for('admin.set_role', user_id=u.id) }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <fieldset role="group">
+            <select name="role" aria-label="Role of {{ u.name }}">
+              {% for r in grantable %}<option value="{{ r }}" {{ "selected" if r == u.role }}>{{ r }}</option>{% endfor %}
+            </select>
+            <button type="submit" class="secondary">Save</button>
+          </fieldset>
+        </form>
+        {% endif %}
+      </td>
+      <td>{{ u.sessions }}</td>
+      <td>{{ u.passkeys }}</td>
+      <td>{{ u.created[:10] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<p><a href="{{ url_for('admin.audit_log') }}">Audit log</a> ·
+  <a href="{{ url_for('admin.people') }}">Players and locations</a></p>
+{% endblock %}

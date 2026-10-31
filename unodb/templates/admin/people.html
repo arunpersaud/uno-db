@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Players and locations – Admin – The UNO database{% endblock %}
+{% block content %}
+<h1>Players and locations</h1>
+{% include "admin/_problems.html" %}
+<p>Rename a player or location (typos, a new spelling). The old name is kept
+  in the <a href="{{ url_for('admin.audit_log') }}">audit log</a>. Two players
+  can't share a name, and the player's page address (<code>/player/joe-miller</code>)
+  follows the name.</p>
+
+<h2>Locations</h2>
+<div class="overflow-auto">
+<table class="striped">
+  <thead><tr><th>Name</th><th>Sessions</th></tr></thead>
+  <tbody>
+    {% for l in locations %}
+    <tr>
+      <td><form method="post" action="{{ url_for('admin.rename_location', location_id=l.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <fieldset role="group">
+          <input type="text" name="name" value="{{ l.name }}" minlength="2" maxlength="60"
+                 aria-label="Name of location {{ l.name }}" required>
+          <button type="submit" class="secondary">Rename</button>
+        </fieldset></form></td>
+      <td>{{ l.sessions }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>Players</h2>
+<div class="overflow-auto">
+<table class="striped">
+  <thead><tr><th>Name</th><th>Scores</th></tr></thead>
+  <tbody>
+    {% for p in players %}
+    <tr>
+      <td><form method="post" action="{{ url_for('admin.rename_player', player_id=p.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <fieldset role="group">
+          <input type="text" name="name" value="{{ p.name }}" minlength="2" maxlength="60"
+                 aria-label="Name of player {{ p.name }}" required>
+          <button type="submit" class="secondary">Rename</button>
+        </fieldset></form></td>
+      <td>{{ p.scores }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -79,6 +79,18 @@ CREATE UNIQUE INDEX locations_name ON locations(name COLLATE NOCASE);
 CREATE UNIQUE INDEX variations_short ON variations(short COLLATE NOCASE);
 CREATE UNIQUE INDEX scores_game_player ON scores(game, player);
 """,
+    # at most one winner per game. The old data has 4 games with two winners,
+    # so no unique index: the triggers only look at new and changed rows
+    7: """
+CREATE TRIGGER one_winner_insert BEFORE INSERT ON scores
+WHEN NEW.score = -9999 AND EXISTS (
+  SELECT 1 FROM scores WHERE game = NEW.game AND score = -9999)
+BEGIN SELECT RAISE(ABORT, 'a game has one winner'); END;
+CREATE TRIGGER one_winner_update BEFORE UPDATE OF score, game ON scores
+WHEN NEW.score = -9999 AND EXISTS (
+  SELECT 1 FROM scores WHERE game = NEW.game AND score = -9999 AND id != NEW.id)
+BEGIN SELECT RAISE(ABORT, 'a game has one winner'); END;
+""",
 }
 
 LATEST = max(MIGRATIONS)

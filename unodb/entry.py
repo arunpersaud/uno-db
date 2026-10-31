@@ -171,7 +171,11 @@ def resolve_players(names: list[str], create: bool, problems: list, to_create: l
         problems.append("A session needs at least two players.")
     if len({n.lower() for n in names}) < len(names):
         problems.append("A player is in the list twice.")
-    return [resolve_player(name, create, problems, to_create) for name in names]
+    ids = [resolve_player(name, create, problems, to_create) for name in names]
+    known = [i for i in ids if i is not None]
+    if len(set(known)) < len(known):
+        problems.append("A player is in the list twice.")
+    return ids
 
 
 @admin.route("/sessions/new", methods=["GET", "POST"])
@@ -314,6 +318,8 @@ def read_game_form(players) -> tuple[dict, list]:
     form = request.form
     problems = []
     winner = form.get("winner", type=int)
+    if len(form.getlist("winner")) > 1:
+        winner = None  # a game has exactly one winner
     scores = {}
     for p in players:
         if p["id"] == winner:
