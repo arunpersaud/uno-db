@@ -568,12 +568,13 @@ class Sort:
     def apply(self, rows: list[dict]) -> list[dict]:
         def key(row):
             value = row[self.key]
-            if isinstance(value, str):
-                value = value.lower()
-            return (value is None, value)
+            return value.lower() if isinstance(value, str) else value
 
-        # stable: rows keep their previous order (date) among equal values
-        return sorted(rows, key=key, reverse=self.desc)
+        # stable: rows keep their previous order (date) among equal values;
+        # rows without a value (None) come last in both directions
+        known = [r for r in rows if r[self.key] is not None]
+        missing = [r for r in rows if r[self.key] is None]
+        return sorted(known, key=key, reverse=self.desc) + missing
 
     def url(self, key: str) -> str:
         desc = not self.desc if key == self.key else self.columns[key]

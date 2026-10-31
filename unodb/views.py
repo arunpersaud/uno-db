@@ -444,6 +444,7 @@ RATING_CHART_PLAYERS = 6
 # sort key -> sorts descending by default
 RATING_COLUMNS = {
     "rating": True, "name": False, "games": True, "average": True, "win_ratio": True,
+    "recent": False,
 }  # fmt: skip
 
 
@@ -460,6 +461,7 @@ def ratings_page():
         table=sort.apply(table),
         sort=sort,
         min_games=RATING_MIN_GAMES,
+        recent=ratings.RECENT,
         chart_players=RATING_CHART_PLAYERS,
     )
 

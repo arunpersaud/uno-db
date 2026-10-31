@@ -18,7 +18,7 @@
   <thead>
     <tr><th>#</th>{{ th(sort, "name", "Player", "text") }}{{ th(sort, "rating", "Rating") }}
       {{ th(sort, "games", "Games") }}{{ th(sort, "average", "Average") }}
-      {{ th(sort, "win_ratio", "Wins vs. chance") }}</tr>
+      {{ th(sort, "win_ratio", "Wins vs. chance") }}{{ th(sort, "recent", "Last " ~ recent) }}</tr>
   </thead>
   <tbody>
     {% for p in table %}
@@ -31,6 +31,7 @@
       <td>{{ p.games }}</td>
       <td>{{ "%+.1f"|format(p.average) }}</td>
       <td>{{ p.win_ratio|ratio }}</td>
+      <td>{{ "%.1f"|format(p.recent) if p.recent is not none else "–" }}</td>
     </tr>
     {% endfor %}
   </tbody>
@@ -39,8 +40,10 @@
 <p><small>Players with at least {{ min_games }} games (with 3 or more at the
   table); # is the place by rating. Rating ± its 95% interval; colored where
   the interval doesn't include 0 (blue: better than the table, red: worse).
-  Average: the plain average, without pulling toward 0. Click a column header
-  to sort.</small></p>
+  Average: the plain average, without pulling toward 0. Last {{ recent }}:
+  the moving average of the points per game over a player's last {{ recent }}
+  games (as on the old site; a win counts as 0, fewer is better), only for
+  players with at least {{ recent }} games. Click a column header to sort.</small></p>
 
 <section>
   <h2>Rating over time</h2>

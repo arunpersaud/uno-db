@@ -27,6 +27,7 @@ from statistics import fmean, pstdev, pvariance
 from . import stats as st
 from .db import WINNER
 
+RECENT = 50  # games in the moving average, as on the old PHP site
 REGULAR = 100  # games, to estimate the real spread between players
 MIN_TAU2 = 0.25  # lower bound for the estimated spread (squared points)
 Z95 = 1.96
@@ -50,6 +51,19 @@ def relative_points(rows) -> dict[int, list[tuple[str, int, float]]]:
             others = (total - p) / (len(points) - 1)
             result[row["player"]].append((row["date"], row["game"], others - p))
     return result
+
+
+def moving_average(rows, window: int = RECENT) -> dict[int, float]:
+    """player -> average points over their last `window` games.
+
+    As on the old PHP site: plain points (a win counts as 0, no table size
+    or black-card adjustment) of all games, and only for players who have
+    at least `window` games. Rows are chronological.
+    """
+    last = defaultdict(list)
+    for row in rows:
+        last[row["player"]].append(st.points(row["score"]))
+    return {p: fmean(v[-window:]) for p, v in last.items() if len(v) >= window}
 
 
 def spreads(relative: dict) -> tuple[float, float]:
@@ -86,8 +100,14 @@ def table(rows, min_games: int = 1) -> list[dict]:
     relative = relative_points(rows)
     sigma2, tau2 = spreads(relative)
     names = {row["player"]: row["name"] for row in rows}
+    recent = moving_average(rows)
     result = [
-        {"player": p, "name": names[p], **estimate([v for _, _, v in g], sigma2, tau2)}
+        {
+            "player": p,
+            "name": names[p],
+            "recent": recent.get(p),
+            **estimate([v for _, _, v in g], sigma2, tau2),
+        }
         for p, g in relative.items()
         if len(g) >= min_games
     ]

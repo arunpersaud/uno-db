@@ -74,3 +74,31 @@ def test_ratings_table_and_chart(client, monkeypatch):
     assert data["names"] == ["Ann", "Bob", "Cy Young"]
     assert len(data["series"]) == 3
     assert re.search(r"#1 of 3</a>", client.get("/player/ann").text)
+
+
+def test_moving_average_needs_the_full_window():
+    # player 1: 4 games with 10, 20, WINNER (0), 30; player 2 only has 2
+    rows = [row(g, 1, s) for g, s in enumerate([10, 20, WINNER, 30], 1)]
+    rows += [row(1, 2, 5), row(2, 2, 5)]
+    avg = ratings.moving_average(rows, window=3)
+    assert avg == {1: pytest.approx((20 + 0 + 30) / 3)}  # last 3, a win is 0
+    assert ratings.moving_average(rows, window=5) == {}
+    assert ratings.moving_average(rows, window=2).keys() == {1, 2}
+
+
+def test_ratings_recent_column(client, monkeypatch):
+    from unodb import views
+
+    monkeypatch.setattr(views, "RATING_MIN_GAMES", 1)
+    monkeypatch.setattr(ratings, "RECENT", 2)
+    html = client.get("/ratings?sort=recent").text
+    assert "Last 2" in html
+    # nobody has 2 games yet in the fixture or everyone has: no crash, and
+    # players without a value sort last in both directions
+    names = re.findall(r'<a href="/player/([a-z-]+)">', html)
+    assert sorted(names) == sorted(
+        re.findall(
+            r'<a href="/player/([a-z-]+)">',
+            client.get("/ratings?sort=recent&order=desc").text,
+        )
+    )
