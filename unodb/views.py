@@ -38,25 +38,39 @@ UNFILTERED = {
 
 @stats.before_request
 def variant_filter():
-    """g.variants: the game types picked with ?variant=<short> (empty: all)."""
-    g.all_variants = query("SELECT id, name, short FROM variations ORDER BY id")
+    """g.variants: the one game type shown (?variant=<short>), as a list.
+
+    Game types are never mixed: without (or with an unknown) ?variant= the one
+    with the most sessions is shown (Uno default); g.default_variant is that one.
+    """
+    g.all_variants = query(
+        """SELECT variations.id, variations.name, variations.short
+           FROM variations
+           LEFT JOIN session ON session.variation = variations.id
+                            AND session.deleted IS NULL
+           GROUP BY variations.id
+           ORDER BY COUNT(session.id) DESC, variations.id"""
+    )
+    g.default_variant = g.all_variants[0] if g.all_variants else None
     by_short = {v["short"].lower(): v for v in g.all_variants}
-    picked = {
-        by_short[w.lower()]["id"]
-        for w in request.args.getlist("variant")
-        if w.lower() in by_short
-    }
-    g.variants = [v for v in g.all_variants if v["id"] in picked]
-    if len(g.variants) == len(g.all_variants):
-        g.variants = []
+    picked = next(
+        (by_short[w.lower()] for w in request.args.getlist("variant") if w.lower() in by_short),
+        g.default_variant,
+    )
+    g.variants = [picked] if picked else []
     g.show_filter = len(g.all_variants) > 1 and request.endpoint not in UNFILTERED
 
 
 @stats.url_defaults
 def keep_filter(endpoint, values):
-    """Links between the stats pages keep the game type filter."""
-    if g.get("variants") and "variant" not in values and endpoint not in UNFILTERED:
-        values["variant"] = [v["short"] for v in g.variants]
+    """Links between the stats pages keep a non-default game type."""
+    if (
+        g.get("variants")
+        and "variant" not in values
+        and endpoint not in UNFILTERED
+        and g.variants[0] != g.default_variant
+    ):
+        values["variant"] = g.variants[0]["short"]
 
 
 SESSION_COLUMNS = {
@@ -305,8 +319,10 @@ def player(name):
     if response:
         return response
     rows = st.all_scores(" AND scores.player = ?", (row["id"],))
-    if not rows and not g.variants:
-        # no games (left): e.g. all their sessions were deleted
+    if not rows and not query(
+        st.SCORES_SQL + " AND scores.player = ? LIMIT 1", (row["id"],)
+    ):
+        # no games (left) in any game type: e.g. all their sessions were deleted
         abort(404)
     data = st.player(rows)
     sort = st.Sort(SESSION_COLUMNS | {"wins": True}, "date")

@@ -578,8 +578,7 @@ class Sort:
 
     def url(self, key: str) -> str:
         desc = not self.desc if key == self.key else self.columns[key]
-        # the game type filter is added again by views.keep_filter (all of it;
-        # to_dict() would keep only the first)
+        # the game type filter is added again by views.keep_filter
         args = {k: v for k, v in request.args.items() if k != "variant"} | {
             "sort": key,
             "order": "desc" if desc else "asc",
