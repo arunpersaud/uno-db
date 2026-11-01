@@ -228,3 +228,87 @@ def enable_user(name):
     get_db().execute("UPDATE users SET disabled = NULL WHERE id = ?", (user["id"],))
     audit("login enabled", user=name)
     click.echo(f"{name} enabled; send a new link: flask uno invite {name}")
+
+
+def find_player(name: str):
+    row = query_one("SELECT * FROM players WHERE name = ? COLLATE NOCASE", (name,))
+    if row is None:
+        raise click.ClickException(f"no player called {name!r}")
+    return row
+
+
+@uno.command("merge-players")
+@click.argument("source")
+@click.argument("target")
+@click.option("--yes", is_flag=True, help="Don't ask for confirmation.")
+def merge_players(source, target, yes):
+    """Move all games of player SOURCE to TARGET and remove SOURCE.
+
+    For entry mistakes (the same person under two names). Refused if both
+    played in the same session (fix that session on the admin pages first).
+    Copies the database to backups/ first and writes an audit log entry.
+    """
+    src, dst = find_player(source), find_player(target)
+    if src["id"] == dst["id"]:
+        raise click.ClickException("source and target are the same player")
+    shared = [
+        " ".join(filter(None, [r["date"], r["location"], f"(session {r['id']})"]))
+        for r in query(
+            """SELECT session.id, session.date, locations.name AS location
+               FROM session LEFT JOIN locations ON locations.id = session.location_id
+               WHERE session.id IN (SELECT session FROM session_players WHERE player = ?)
+                 AND session.id IN (SELECT session FROM session_players WHERE player = ?)
+                  OR session.id IN (
+                   SELECT g.session FROM games g
+                   JOIN scores a ON a.game = g.id AND a.player = ?
+                   JOIN scores b ON b.game = g.id AND b.player = ?)
+               ORDER BY session.date""",
+            (src["id"], dst["id"], src["id"], dst["id"]),
+        )
+    ]
+    if shared:
+        raise click.ClickException(
+            f"{src['name']} and {dst['name']} both played in {len(shared)} "
+            "session(s), e.g. " + "; ".join(shared[:5])
+        )
+    counts = {
+        "scores": query_one(
+            "SELECT count(*) FROM scores WHERE player = ?", (src["id"],)
+        )[0],
+        "sessions": query_one(
+            "SELECT count(*) FROM session_players WHERE player = ?", (src["id"],)
+        )[0],
+    }
+    click.echo(
+        f"{src['name']} (id {src['id']}): {counts['scores']} scores in "
+        f"{counts['sessions']} sessions -> {dst['name']} (id {dst['id']}); "
+        f"{src['name']} is removed"
+    )
+    if not yes:
+        click.confirm("Merge?", abort=True)
+    db = get_db()
+    path = Path(current_app.config["DATABASE"])
+    click.echo(f"backup: {migrations.backup(db, path, 'merge')}")
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        db.execute(
+            "UPDATE scores SET player = ? WHERE player = ?", (dst["id"], src["id"])
+        )
+        db.execute(
+            "UPDATE session_players SET player = ? WHERE player = ?",
+            (dst["id"], src["id"]),
+        )
+        db.execute("DELETE FROM players WHERE id = ?", (src["id"],))
+        audit(
+            "players merged",
+            source=src["name"],
+            source_id=src["id"],
+            target=dst["name"],
+            target_id=dst["id"],
+            **counts,
+        )
+        db.execute("COMMIT")
+    except BaseException:
+        db.execute("ROLLBACK")
+        raise
+    click.echo(f"done: {src['name']} is now {dst['name']}")

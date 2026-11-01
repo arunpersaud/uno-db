@@ -1,6 +1,7 @@
 """Admin-only pages, and the access rules of every admin route."""
 
 import pytest
+from unodb.db import get_db
 from test_entry import CSRF, as_user, db_rows, make_user, post
 
 # routes that work without a login (passkey ceremonies and the invite page);
@@ -211,3 +212,62 @@ def test_audit_log_page(app, client, boss):
     only = client.get("/admin/audit?action=location+renamed").text
     assert "location renamed" in only and "<td>player renamed</td>" not in only
     assert client.get("/admin/audit?page=5").status_code == 200
+
+
+# --- flask uno merge-players -------------------------------------------------
+
+
+def merge_cli(app, *args, input=None):
+    return app.test_cli_runner().invoke(
+        args=["uno", "merge-players", *args], input=input
+    )
+
+
+@pytest.fixture
+def dan(app):
+    """Dan played alone with Cy in a session of his own (a second spelling of Ann)."""
+    with app.app_context():
+        db = get_db()
+        db.execute("INSERT INTO players (id, name) VALUES (4, 'Dan')")
+        db.execute(
+            "INSERT INTO session (id, date, location_id, number_of_players, variation)"
+            " VALUES (4, '2005-01-01', 1, 2, 1)"
+        )
+        db.execute("INSERT INTO games (id, session) VALUES (5, 4)")
+        db.execute(
+            "INSERT INTO scores (game, player, score, position)"
+            " VALUES (5, 4, -9999, 0), (5, 3, 9, 1)"
+        )
+        db.execute("INSERT INTO session_players VALUES (4, 4, 0), (4, 3, 1)")
+
+
+def test_merge_players(app, dan, database):
+    result = merge_cli(app, "dan", "Ann", "--yes")
+    assert result.exit_code == 0, result.output
+    assert "Dan is now Ann" in result.output
+    with app.app_context():
+        db = get_db()
+        assert db.execute("SELECT 1 FROM players WHERE name = 'Dan'").fetchone() is None
+        assert db.execute("SELECT count(*) FROM scores WHERE player = 4").fetchone()[0] == 0
+        assert db.execute("SELECT player FROM scores WHERE game = 5 AND score = -9999").fetchone()[0] == 1
+        assert db.execute("SELECT player FROM session_players WHERE session = 4 AND seat = 0").fetchone()[0] == 1
+        log = db.execute("SELECT details FROM audit_log WHERE action = 'players merged'").fetchone()
+        assert '"source": "Dan"' in log[0] and '"target": "Ann"' in log[0]
+    assert list((database.parent / "backups").glob("uno-merge-*.sqlite"))
+
+
+def test_merge_players_asks_first(app, dan):
+    result = merge_cli(app, "Dan", "Ann", input="n\n")
+    assert result.exit_code != 0
+    with app.app_context():
+        assert get_db().execute("SELECT 1 FROM players WHERE name = 'Dan'").fetchone()
+
+
+def test_merge_players_refuses(app, dan):
+    # Ann and Bob played together
+    result = merge_cli(app, "Bob", "Ann", "--yes")
+    assert result.exit_code != 0 and "both played in" in result.output
+    assert merge_cli(app, "Ann", "ann", "--yes").exit_code != 0
+    assert "no player called" in merge_cli(app, "Nobody", "Ann", "--yes").output
+    with app.app_context():
+        assert get_db().execute("SELECT count(*) FROM players").fetchone()[0] == 4

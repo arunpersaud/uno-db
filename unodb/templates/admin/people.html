@@ -8,6 +8,13 @@
   can't share a name, and the player's page address (<code>/player/joe-miller</code>)
   follows the name.</p>
 
+<p><strong>Merging players</strong> (the same person entered under two names)
+  can't be done on this page, on purpose: it can't be undone from here. On the
+  server run <code>podman exec unodb flask --app unodb uno merge-players
+  "Joe" "Joe Miller"</code> &ndash; all games of the first player move to the
+  second and the first name is removed. It makes a backup first and writes an
+  audit log entry.</p>
+
 <h2>Locations</h2>
 <div class="overflow-auto">
 <table class="striped">

@@ -97,6 +97,7 @@ in its environment), e.g.
 | `users` | lists users with role, passkeys, sessions |
 | `set-role NAME ROLE` | changes a role |
 | `claim-sessions NAME` | gives NAME all sessions without an owner (data from before logins existed) |
+| `merge-players SOURCE TARGET [--yes]` | moves all games of SOURCE to TARGET and removes SOURCE (the same person entered under two names). Asks first, backs up the database, writes an audit entry; refused if both played in the same session |
 | `game-types` | lists the game types with their owners |
 | `assign-game-type SHORT NAME` | makes NAME the owner of a game type (they may edit its rules) |
 | `remove-user NAME [--delete-sessions]` | removes the login (passkeys, open invites); with the flag also deletes all sessions NAME entered |
